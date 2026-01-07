@@ -1,0 +1,671 @@
+/* SpotBro - Custom Styles */
+
+/* ==========================================
+   RESET & BASE STYLES
+   ========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================
+   GRADIENT BACKGROUNDS
+   ========================================== */
+.gradient-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: all 0.3s ease;
+}
+
+.gradient-button:hover {
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   CARDS & INTERACTIONS
+   ========================================== */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================
+   STAT CARDS
+   ========================================== */
+.stat-card {
+    background: linear-gradient(135deg, var(--tw-gradient-from) 0%, var(--tw-gradient-to) 100%);
+}
+
+/* ==========================================
+   CHARTS
+   ========================================== */
+.chart-bar {
+    transition: all 0.3s ease;
+}
+
+.chart-bar:hover {
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+/* ==========================================
+   UTILITY CLASSES
+   ========================================== */
+.hidden {
+    display: none !important;
+}
+
+/* ==========================================
+   ICONS
+   ========================================== */
+.icon {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.icon-lg {
+    width: 48px;
+    height: 48px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ==========================================
+   BUTTONS
+   ========================================== */
+.btn {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    outline: none;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn:focus {
+    outline: none;
+}
+
+/* ==========================================
+   NAVIGATION
+   ========================================== */
+.nav-item {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.nav-item:hover {
+    background-color: #f3f4f6;
+}
+
+.nav-item.active {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+/* ==========================================
+   FORM INPUTS
+   ========================================== */
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+    transition: all 0.2s ease;
+}
+
+input:focus {
+    outline: none;
+}
+
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Apply fade-in animation to pages */
+#dashboardPage,
+#libraryPage,
+#detailPage,
+#cameraSetupPage,
+#workoutActivePage,
+#summaryPage,
+#progressPage {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ==========================================
+   WORKOUT ACTIVE PAGE - SPECIAL STYLES
+   ========================================== */
+#workoutActivePage .bg-black {
+    position: relative;
+}
+
+/* Camera feed overlay badges */
+#workoutActivePage .absolute {
+    animation: slideInRight 0.4s ease;
+}
+
+/* ==========================================
+   PROGRESS CHARTS
+   ========================================== */
+#formScoreChart .chart-bar,
+#workoutFrequencyChart .chart-bar {
+    animation: fadeIn 0.5s ease;
+}
+
+/* ==========================================
+   REP BREAKDOWN BARS
+   ========================================== */
+#repBreakdown .bg-green-500,
+#repBreakdown .bg-yellow-500,
+#repBreakdown .bg-red-500 {
+    transition: width 0.5s ease;
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+   ========================================== */
+
+/* Mobile devices (portrait) */
+@media (max-width: 640px) {
+    .icon-lg {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    #navigation .flex.items-center.space-x-6 {
+        gap: 0.5rem;
+    }
+    
+    #navigation .font-medium {
+        display: none;
+    }
+}
+
+/* Tablets (portrait) */
+@media (max-width: 768px) {
+    .grid.grid-cols-1.md\:grid-cols-3 {
+        grid-template-columns: 1fr;
+    }
+    
+    #workoutActivePage .grid.lg\:grid-cols-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+    .card:hover {
+        transform: translateY(-6px);
+    }
+}
+
+/* ==========================================
+   SCROLLBAR STYLING (Optional)
+   ========================================== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* ==========================================
+   LOADING STATES (Optional - for future use)
+   ========================================== */
+.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #667eea;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ==========================================
+   PRINT STYLES (Optional - for reports)
+   ========================================== */
+@media print {
+    #navigation,
+    .btn,
+    button {
+        display: none;
+    }
+    
+    body {
+        background: white;
+    }
+    
+    .shadow-sm,
+    .shadow-2xl {
+        box-shadow: none;
+    }
+}
+
+/* ==========================================
+   ACCESSIBILITY IMPROVEMENTS
+   ========================================== */
+
+/* Focus visible for keyboard navigation */
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .gradient-bg,
+    .gradient-button {
+        background: #0066cc;
+    }
+    
+    .nav-item.active {
+        background-color: #0066cc;
+        color: white;
+    }
+}
+
+/* ==========================================
+   DARK MODE SUPPORT (Optional - for future)
+   ========================================== */
+@media (prefers-color-scheme: dark) {
+    /* Uncomment these to enable dark mode */
+    
+    /* body {
+        background-color: #1a1a1a;
+        color: #ffffff;
+    }
+    
+    .bg-white {
+        background-color: #2d2d2d !important;
+    }
+    
+    .text-gray-900 {
+        color: #ffffff !important;
+    }
+    
+    .text-gray-600 {
+        color: #a0a0a0 !important;
+    }
+    
+    .bg-gray-50 {
+        background-color: #1a1a1a !important;
+    }
+    
+    .border-gray-200 {
+        border-color: #404040 !important;
+    } */
+}
+
+/* ====================== LOGIN PAGE ====================== */
+.login-body {
+  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+              url('images/login_bg.jpg')
+              center center / cover no-repeat fixed;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Container */
+.login-container {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Modern Glass Card */
+.login-card {
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(12px);
+  padding: 3rem 2.2rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  animation: fadeIn 0.8s ease;
+}
+
+/* Logo / Title */
+.login-logo img {
+  height: 80px;           /* bigger logo on login page */
+  margin-bottom: 1.5rem;
+}
+
+.login-title {
+  margin-bottom: 2rem;
+  color: #f1f1f1;
+  font-size: 1.3rem;
+  letter-spacing: 1px;
+}
+
+/* Form */
+.login-form {
+  text-align: left;
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 1.4rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: .4rem;
+  font-weight: 600;
+  color: #eaeaea;
+  font-size: 0.9rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  backdrop-filter: blur(4px);
+  transition: 0.3s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  background: rgba(255,255,255,0.25);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+}
+
+/* Button */
+.login-btn {
+  width: 100%;
+  padding: 1rem !important;
+  margin-top: 0.7rem;
+  border-radius: 10px;
+  border: none;
+  background: #F6AE2D;
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.login-btn:hover {
+  background: #d18800;
+  transform: translateY(-2px);
+}
+
+/* Signup Link */
+.login-signup {
+  margin-top: 1.4rem;
+  color: #dddddd;
+  font-size: 0.95rem;
+}
+
+.login-signup a {               /*sign up button*/
+  color: #F6AE2D;
+  font-weight: 600;
+}
+
+/* Back Link */
+.login-back {
+  margin-top: 2rem;
+}
+
+.login-back a {
+  color: #fff;
+  font-size: 0.92rem;
+  opacity: 0.8;
+}
+
+.login-back a:hover {
+  opacity: 1;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .login-card {
+    padding: 2.5rem 1.7rem;
+  }
+  .login-logo {
+    font-size: 2.2rem;
+  }
+}
+/* ====================== IMAGE LOGO ====================== */
+.logo-image img {
+  height: 50px;           /* adjust this value to make your logo bigger/smaller */
+  width: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* ==========================================
+   CUSTOM UTILITIES
+   ========================================== */
+
+/* Glassmorphism effect (optional) */
+.glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Smooth reveal animation */
+.reveal {
+    opacity: 0;
+    animation: fadeIn 0.6s ease forwards;
+}
+
+/* Bounce animation for success states */
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.bounce {
+    animation: bounce 0.5s ease;
+}
+
+/* Shake animation for errors */
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-10px);
+    }
+    75% {
+        transform: translateX(10px);
+    }
+}
+
+.shake {
+    animation: shake 0.3s ease;
+}
+
+/* Additional styles from index.html */
+.gradient-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-button:hover {
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    transform: translateY(-2px);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.chart-bar {
+    transition: all 0.3s ease;
+}
+
+.chart-bar:hover {
+    opacity: 0.8;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.icon {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.icon-lg {
+    width: 48px;
+    height: 48px;
+}
+
+.btn {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.nav-item {
+    transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+    background-color: #f3f4f6;
+}
+
+.nav-item.active {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--tw-gradient-from) 0%, var(--tw-gradient-to) 100%);
+}
