@@ -19,8 +19,8 @@
       <p style="color: #dddddd; font-size: 1rem; margin-bottom: 2rem;">Your AI-powered fitness form coach</p>
 
       <div style="text-align: center;">
-        <button onclick="window.location.href='login.html'" class="btn login-btn" style="margin-bottom: 1rem;">Start Training</button>
-        <button onclick="window.location.href='signup.html'" class="btn login-btn">Sign Up</button>
+        <button onclick="window.location.href='login.php'" class="btn login-btn" style="margin-bottom: 1rem;">Start Training</button>
+        <button onclick="window.location.href='signup.php'" class="btn login-btn">Sign Up</button>
       </div>
     </div>
   </div>

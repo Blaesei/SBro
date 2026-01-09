@@ -17,14 +17,14 @@
                 <img src="images/logo.png" alt="SpotBro Logo" class="h-12">
             </div>
             <div class="flex items-center space-x-6">
-                <a href="home.html" class="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg">
+                <a href="home.php" class="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg">
                     <svg class="icon" viewBox="0 0 24 24">
                         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                         <polyline points="9 22 9 12 15 12 15 22"></polyline>
                     </svg>
                     <span class="font-medium">Home</span>
                 </a>
-                <a href="exercises.html" class="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg">
+                <a href="exercises.php" class="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg">
                     <svg class="icon" viewBox="0 0 24 24">
                         <path d="m6.5 6.5 11 11"></path>
                         <path d="m21 21-1-1"></path>
@@ -33,14 +33,14 @@
                     </svg>
                     <span class="font-medium">Exercises</span>
                 </a>
-                <a href="progress.html" class="nav-item active flex items-center space-x-2 px-4 py-2 rounded-lg">
+                <a href="progress.php" class="nav-item active flex items-center space-x-2 px-4 py-2 rounded-lg">
                     <svg class="icon" viewBox="0 0 24 24">
                         <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
                         <polyline points="16 7 22 7 22 13"></polyline>
                     </svg>
                     <span class="font-medium">Progress</span>
                 </a>
-                <a href="login.html" class="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">
+                <a href="login.php" class="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">
                     <svg class="icon" viewBox="0 0 24 24">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                         <polyline points="16 17 21 12 16 7"></polyline>
