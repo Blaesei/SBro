@@ -28,6 +28,11 @@ def train_form_classifier(data_path, model_output_path, exercise='pushup'):
     df = pd.read_csv(data_path)
     print(f"Loaded {len(df)} samples")
     print(f"\nLabel distribution:\n{df['label'].value_counts()}\n")
+    df['label'] = df['label'].replace({
+        'INCOMPLETE_DEPTH': 'FORM_ERROR',
+        'ELBOWS_FLARED': 'FORM_ERROR', 
+        'NECK_STRAIN': 'FORM_ERROR'
+    })
     
     # 2. Prepare features and labels
     feature_cols = [col for col in df.columns 
