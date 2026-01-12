@@ -11,6 +11,25 @@ from collections import deque
 from pose_detector import PoseDetector
 from feature_extractor import FeatureExtractor
 
+def _body_fully_visible(self, landmarks, threshold=0.6):
+    """
+    Ensure critical push-up landmarks are visible with confidence
+    Prevents face-only false positives
+    """
+    required = [
+        11, 12,  # shoulders
+        13, 14,  # elbows
+        15, 16,  # wrists
+        23, 24,  # hips
+        25, 26   # knees
+    ]
+
+    return all(
+        landmarks.landmark[i].visibility > threshold
+        for i in required
+    )
+
+
 class FormAnalyzer:
     """
     Real-time exercise form analyzer with validated rep counting
@@ -93,61 +112,90 @@ class FormAnalyzer:
             return angle
         return sum(self.angle_buffer) / len(self.angle_buffer)
     
+    def _body_fully_visible(self, landmarks, threshold=0.6):
+        """
+        Ensure critical push-up landmarks are visible with confidence
+        Prevents face-only false positives
+        """
+        required_indices = [
+            11, 12,  # shoulders
+            13, 14,  # elbows
+            15, 16,  # wrists
+            23, 24,  # hips
+            25, 26   # knees
+        ]
+
+        for i in required_indices:
+            if landmarks.landmark[i].visibility < threshold:
+                return False
+
+        return True
+    
     def is_in_pushup_position(self, features, landmarks):
         """
-        Validate push-up position with relaxed thresholds
-        
-        Returns: (is_valid, reason)
+        Validate push-up position with STRICT visibility gating
         """
         try:
             lm = landmarks.landmark
-            
+
+            # 🚨 HARD BLOCK — FULL BODY MUST BE VISIBLE
+            if not self._body_fully_visible(landmarks, threshold=0.7):
+                self.invalid_position_frames += 1
+                return False, "⛔ Full body must be visible"
+
             # Key body points
             shoulder_y = lm[12].y
             hip_y = lm[24].y
             wrist_y = lm[16].y
             knee_y = lm[26].y
-            
+
             # Feature values
             back_angle = features.get('back_angle', 0)
             hip_ratio = features.get('hip_height_ratio', 0)
             knee_angle = features.get('knee_angle', 180)
-            
-            # Relaxed mode bypass
+
+            # ⚠️ RELAXED MODE (SAFE)
             if self.relaxed_mode:
                 if wrist_y < shoulder_y - 0.3:
                     return False, "⚠ Lower hands to ground"
                 return True, "✓ Relaxed mode - counting reps"
-            
-            # Position checks (relaxed thresholds)
+
+            # -------- POSITION CHECKS --------
+
+            # Hands must be near ground
             if wrist_y < shoulder_y - 0.2:
                 return False, "❌ Hands not on ground"
-            
+
+            # Body must be horizontal
             body_vertical_diff = abs(shoulder_y - hip_y)
             if body_vertical_diff > 0.70:
                 return False, "❌ Body not horizontal"
-            
+
+            # Hip height check
             if hip_ratio < 0.30:
                 return False, "❌ Lift body to plank"
             elif hip_ratio > 2.0:
                 return False, "❌ Lower into push-up position"
-            
+
+            # Legs straight
             if knee_angle < 140:
                 return False, "❌ Straighten legs"
-            
+
+            # Back straight
             if back_angle < 140:
                 return False, "❌ Straighten back"
-            
+
+            # Close enough to floor
             if shoulder_y < 0.25:
                 return False, "❌ Move closer to ground"
-            
-            # Valid position
+
+            # ✅ VALID POSITION
             self.invalid_position_frames = 0
             return True, "✓ In position - ready to count"
-            
+
         except Exception as e:
             return False, f"⚠ Position check failed: {str(e)}"
-    
+
     def get_detailed_feedback(self, features, prediction):
         """Generate specific feedback based on form analysis"""
         issues = []
@@ -227,6 +275,39 @@ class FormAnalyzer:
         # All checks passed
         return True, "Valid rep"
     
+    def _rule_based_classification(self, features):
+        """
+        Rule-based classification when ML model is uncertain
+        (useful for small datasets)
+        """
+        elbow_angle = features.get('elbow_angle', 180)
+        back_angle = features.get('back_angle', 180)
+        hip_ratio = features.get('hip_height_ratio', 1.0)
+        elbow_spread = features.get('elbow_spread', 0.0)
+        
+        issues = []
+        
+        # Check each form aspect
+        if elbow_spread > 0.15:
+            issues.append('ELBOWS_FLARED')
+        
+        if back_angle < 155:
+            issues.append('BACK_SAGGING')
+        
+        if hip_ratio < 0.80 or hip_ratio > 1.15:
+            issues.append('BACK_SAGGING')
+        
+        if elbow_angle > 120 and self.rep_phase == "DOWN":
+            issues.append('INCOMPLETE_DEPTH')
+        
+        # Return classification
+        if len(issues) == 0:
+            return 'GOOD_FORM'
+        elif len(issues) == 1:
+            return issues[0]
+        else:
+            return 'FORM_ERROR'
+    
     def analyze_frame(self, frame):
         """
         Analyze frame with validated rep counting
@@ -261,6 +342,11 @@ class FormAnalyzer:
             prediction = self.model.predict([feature_vector])[0]
             confidence = self.model.predict_proba([feature_vector]).max()
             
+            # 🆕 FALLBACK: If confidence is low, use rule-based system
+            if confidence < 0.6:
+                prediction = self._rule_based_classification(features)
+                confidence = 0.7  # Default confidence for rule-based
+
             # Temporal smoothing
             self.prediction_buffer.append(prediction)
             final_prediction = max(set(self.prediction_buffer), key=self.prediction_buffer.count)

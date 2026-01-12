@@ -8,6 +8,72 @@ import numpy as np
 class FeatureExtractor:
     """Extract biomechanical features from pose landmarks"""
     
+    def extract_squat_features(self, landmarks):
+        """
+        Extract features for squat exercise
+        
+        Key angles and measurements:
+        - Knee angle (should reach ~90° at bottom)
+        - Hip depth (hip should go below knee)
+        - Back angle (should stay upright)
+        - Knee alignment (shouldn't cave inward)
+        - Ankle angle
+        """
+        try:
+            lm = landmarks.landmark
+            
+            # Use right side
+            shoulder = lm[12]
+            hip = lm[24]
+            knee = lm[26]
+            ankle = lm[28]
+            heel = lm[30] if len(lm) > 30 else ankle
+            
+            # Feature 1: Knee angle (hip-knee-ankle)
+            knee_angle = self.calculate_angle(hip, knee, ankle)
+            
+            # Feature 2: Hip depth ratio (hip y-position relative to knee)
+            hip_depth_ratio = hip.y / knee.y
+            
+            # Feature 3: Back angle (shoulder-hip-knee)
+            back_angle = self.calculate_angle(shoulder, hip, knee)
+            
+            # Feature 4: Knee alignment (lateral knee-ankle distance)
+            knee_alignment = abs(knee.x - ankle.x)
+            
+            # Feature 5: Ankle angle (knee-ankle-heel approximation)
+            class VirtualPoint:
+                def __init__(self, x, y):
+                    self.x = x
+                    self.y = y
+            
+            forward_ref = VirtualPoint(ankle.x + 0.1, ankle.y)
+            ankle_angle = self.calculate_angle(knee, ankle, forward_ref)
+            
+            # Feature 6: Torso length (shoulder to hip distance)
+            torso_length = self.calculate_distance(shoulder, hip)
+            
+            # Feature 7: Hip-knee distance
+            hip_knee_dist = self.calculate_distance(hip, knee)
+            
+            # Feature 8: Knee-ankle distance
+            knee_ankle_dist = self.calculate_distance(knee, ankle)
+            
+            return {
+                'knee_angle': knee_angle,
+                'hip_depth_ratio': hip_depth_ratio,
+                'back_angle': back_angle,
+                'knee_alignment': knee_alignment,
+                'ankle_angle': ankle_angle,
+                'torso_length': torso_length,
+                'hip_knee_dist': hip_knee_dist,
+                'knee_ankle_dist': knee_ankle_dist
+            }
+        
+        except Exception as e:
+            print(f"Squat feature extraction error: {e}")
+            return None
+    
     @staticmethod
     def calculate_angle(point1, point2, point3):
         """
