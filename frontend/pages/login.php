@@ -4,105 +4,167 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SpotBro</title>
-    <!-- FIXED: Correct path from /sbro/frontend/pages/ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
-        /* Fallback inline styles with FIXED INPUT VISIBILITY */
+        /* Override body styles for login page */
         body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        .auth-page {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                        url('../assets/images/login_bg.jpg')
+                        center center / cover no-repeat fixed;
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Container */
+        .login-container {
+            width: 100%;
+            max-width: 420px;
             padding: 1rem;
         }
-        .auth-card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 2rem;
-            max-width: 420px;
-            width: 100%;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        .logo-image {
+
+        /* Modern Glass Card */
+        .login-card {
+            background: rgba(255, 255, 255, 0.10);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 3rem 2.2rem;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4);
             text-align: center;
-            margin-bottom: 1.5rem;
+            animation: fadeIn 0.8s ease;
         }
+
+        /* Logo */
         .logo-image img {
-            height: 60px;
-        }
-        .auth-title {
-            font-size: 1.875rem;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 0.5rem;
-        }
-        .auth-subtitle {
-            text-align: center;
-            color: #6b7280;
-            margin-bottom: 2rem;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-label {
+            height: 80px;
+            width: auto;
             display: block;
+            margin: 0 auto 1.5rem;
+        }
+
+        /* Title */
+        .login-title {
+            margin-bottom: 2rem;
+            color: #f1f1f1;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
         }
-        .form-input {
+
+        /* Form */
+        .login-form {
+            text-align: left;
+        }
+
+        /* Form Group */
+        .form-group {
+            margin-bottom: 1.4rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 600;
+            color: #eaeaea;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
             width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.5rem;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 10px;
             font-size: 1rem;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            transition: 0.3s ease;
             box-sizing: border-box;
-            /* CRITICAL: Make text visible */
-            color: #111827 !important;
-            background-color: #ffffff !important;
         }
-        /* CRITICAL: Fix password masking */
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            background: rgba(255,255,255,0.25);
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+        }
+
+        /* Password inputs - ensure dots are visible */
         input[type="password"] {
             font-family: text-security-disc;
             -webkit-text-security: disc;
         }
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .form-input::placeholder {
-            color: #9ca3af;
-            opacity: 1;
-        }
+
+        /* Error messages */
         .form-error {
-            color: #ef4444;
+            color: #ff6b6b;
             font-size: 0.875rem;
             margin-top: 0.25rem;
             display: block;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
-        .btn {
+
+        /* Alert Container */
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ffcccc;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #ccffcc;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        /* Button */
+        .login-btn {
             width: 100%;
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            padding: 1rem;
+            margin-top: 0.7rem;
+            border-radius: 10px;
             border: none;
-            border-radius: 0.75rem;
+            background: #F6AE2D;
+            color: #fff;
+            font-size: 1.05rem;
             font-weight: 600;
-            font-size: 1rem;
             cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .btn:hover {
-            opacity: 0.9;
+
+        .login-btn:hover:not(:disabled) {
+            background: #d18800;
+            transform: translateY(-2px);
         }
-        .btn:disabled {
-            opacity: 0.5;
+
+        .login-btn:disabled {
+            opacity: 0.6;
             cursor: not-allowed;
         }
+
+        /* Spinner */
         .spinner {
             border: 3px solid rgba(255,255,255,0.3);
             border-top-color: white;
@@ -110,62 +172,103 @@
             width: 20px;
             height: 20px;
             animation: spin 0.8s linear infinite;
-            display: inline-block;
             margin-left: 0.5rem;
         }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        .alert {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
+
+        /* Signup Link */
+        .login-signup {
+            margin-top: 1.4rem;
+            color: #dddddd;
+            font-size: 0.95rem;
         }
-        .alert-error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        .alert-success {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        .auth-footer {
-            text-align: center;
-            margin-top: 1.5rem;
-            color: #6b7280;
-        }
-        .auth-footer a {
-            color: #667eea;
+
+        .login-signup a {
+            color: #F6AE2D;
             font-weight: 600;
             text-decoration: none;
+        }
+
+        .login-signup a:hover {
+            text-decoration: underline;
+        }
+
+        /* Back Link */
+        .login-back {
+            margin-top: 2rem;
+        }
+
+        .login-back a {
+            color: #fff;
+            font-size: 0.92rem;
+            opacity: 0.8;
+            text-decoration: none;
+        }
+
+        .login-back a:hover {
+            opacity: 1;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(15px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .login-card {
+                padding: 2.5rem 1.7rem;
+            }
+            .login-title {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="auth-page">
-        <div class="auth-card">
-            <!-- Logo - FIXED PATH -->
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Logo -->
             <div class="logo-image">
-                <img src="../assets/images/logo.png" alt="SpotBro" onerror="this.style.display='none'">
+                <img src="../assets/images/logo.png" alt="SpotBro Logo" onerror="this.style.display='none'">
             </div>
             
             <!-- Title -->
-            <h1 class="auth-title">Welcome Back</h1>
-            <p class="auth-subtitle">Sign in to continue your fitness journey</p>
+            <h2 class="login-title">Welcome Back</h2>
             
             <!-- Alert Container -->
             <div id="alertContainer"></div>
             
             <!-- Login Form -->
-            <form id="loginForm">
+            <form id="loginForm" class="login-form">
                 <div class="form-group">
-                    <label class="form-label" for="email">Email Address</label>
+                    <label for="email">Email</label>
                     <input 
                         type="email" 
                         id="email" 
                         name="email" 
-                        class="form-input" 
-                        placeholder="you@example.com"
+                        placeholder="you@spotbro.com"
                         required
                         autocomplete="email"
                     >
@@ -173,12 +276,11 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
+                    <label for="password">Password</label>
                     <input 
                         type="password" 
                         id="password" 
                         name="password" 
-                        class="form-input" 
                         placeholder="••••••••"
                         required
                         autocomplete="current-password"
@@ -186,22 +288,21 @@
                     <span class="form-error" id="passwordError"></span>
                 </div>
                 
-                <button type="submit" class="btn" id="loginBtn">
+                <button type="submit" class="btn login-btn" id="loginBtn">
                     <span id="loginBtnText">Sign In</span>
                     <span id="loginBtnSpinner" class="spinner" style="display: none;"></span>
                 </button>
             </form>
             
-            <!-- Footer -->
-            <div class="auth-footer">
-                Don't have an account? 
+            <!-- Signup Link -->
+            <p class="login-signup">
+                Don't have an account?
                 <a href="signup.php">Sign up for free</a>
-            </div>
+            </p>
             
-            <div style="text-align: center; margin-top: 1.5rem;">
-                <a href="../index.php" style="color: #6b7280; font-size: 0.875rem; text-decoration: none;">
-                    ← Back to home
-                </a>
+            <!-- Back to Home -->
+            <div class="login-back">
+                <a href="../index.php">← Back to home</a>
             </div>
         </div>
     </div>
@@ -288,7 +389,7 @@
                     // Show success message
                     showAlert('Login successful! Redirecting...', 'success');
                     
-                    // FIXED: Redirect to correct path
+                    // Redirect to home
                     const homePath = getHomePath();
                     console.log('Redirecting to:', homePath);
                     
