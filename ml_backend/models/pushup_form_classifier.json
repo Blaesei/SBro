@@ -1,0 +1,157 @@
+{
+  "training_config": {
+    "n_estimators": 100,
+    "max_depth": 10,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "n_jobs": -1,
+    "test_size": 0.2,
+    "random_state": 42
+  },
+  "training_timestamp": "2026-01-19T23:59:28.715315",
+  "dataset_size": {
+    "train_samples": 632,
+    "test_samples": 138,
+    "train_videos": 24,
+    "test_videos": 6
+  },
+  "train_videos": [
+    "pushup_back_01.mp4",
+    "pushup_back_02.mp4",
+    "pushup_back_03.mp4",
+    "pushup_back_04.mp4",
+    "pushup_back_05.mp4",
+    "pushup_back_06.mp4",
+    "pushup_back_07.mp4",
+    "pushup_back_08.mp4",
+    "pushup_back_11.mp4",
+    "pushup_depth_01.mp4",
+    "pushup_depth_02.mp4",
+    "pushup_depth_03.mp4",
+    "pushup_depth_04.mp4",
+    "pushup_depth_06.mp4",
+    "pushup_depth_08.mp4",
+    "pushup_depth_09.mp4",
+    "pushup_good_01.mp4",
+    "pushup_good_02.mp4",
+    "pushup_good_03.mp4",
+    "pushup_good_05.mp4",
+    "pushup_good_06.mp4",
+    "pushup_good_07.mp4",
+    "pushup_good_09.mp4",
+    "pushup_good_10.mp4"
+  ],
+  "test_videos": [
+    "pushup_back_09.mp4",
+    "pushup_back_10.mp4",
+    "pushup_depth_05.mp4",
+    "pushup_depth_07.mp4",
+    "pushup_good_04.mp4",
+    "pushup_good_08.mp4"
+  ],
+  "feature_columns": [
+    "torso_length",
+    "shoulder_width_norm",
+    "elbow_angle_avg",
+    "hip_width_norm",
+    "knee_angle_avg",
+    "spine_angle",
+    "com_x_norm",
+    "com_y_norm",
+    "elbow_flexion",
+    "body_alignment",
+    "hip_sag_ratio",
+    "elbow_flare",
+    "hand_placement_width",
+    "head_position",
+    "is_bottom_position",
+    "is_top_position"
+  ],
+  "n_features": 16,
+  "label_classes": [
+    "BACK_SAGGING",
+    "GOOD_FORM",
+    "INCOMPLETE_DEPTH"
+  ],
+  "n_classes": 3,
+  "metrics": {
+    "train_accuracy": 0.9984177215189873,
+    "test_accuracy": 0.9927536231884058,
+    "test_f1_macro": 0.9926420052557106
+  },
+  "classification_report": {
+    "BACK_SAGGING": {
+      "precision": 1.0,
+      "recall": 0.9767441860465116,
+      "f1-score": 0.9882352941176471,
+      "support": 43.0
+    },
+    "GOOD_FORM": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 47.0
+    },
+    "INCOMPLETE_DEPTH": {
+      "precision": 0.9795918367346939,
+      "recall": 1.0,
+      "f1-score": 0.9896907216494846,
+      "support": 48.0
+    },
+    "accuracy": 0.9927536231884058,
+    "macro avg": {
+      "precision": 0.9931972789115647,
+      "recall": 0.9922480620155039,
+      "f1-score": 0.9926420052557106,
+      "support": 138.0
+    },
+    "weighted avg": {
+      "precision": 0.9929015084294587,
+      "recall": 0.9927536231884058,
+      "f1-score": 0.992748349900247,
+      "support": 138.0
+    }
+  },
+  "confusion_matrix": {
+    "matrix": [
+      [
+        42,
+        0,
+        1
+      ],
+      [
+        0,
+        47,
+        0
+      ],
+      [
+        0,
+        0,
+        48
+      ]
+    ],
+    "labels": [
+      "BACK_SAGGING",
+      "GOOD_FORM",
+      "INCOMPLETE_DEPTH"
+    ]
+  },
+  "feature_importances": {
+    "torso_length": 0.17366189887980016,
+    "shoulder_width_norm": 0.03325365524776423,
+    "elbow_angle_avg": 0.07168112888454453,
+    "hip_width_norm": 0.02282151158201695,
+    "knee_angle_avg": 0.07480722677194633,
+    "spine_angle": 0.02989484583837149,
+    "com_x_norm": 0.14510971943615314,
+    "com_y_norm": 0.13988870057270847,
+    "elbow_flexion": 0.07104985715999361,
+    "body_alignment": 0.043724507363207044,
+    "hip_sag_ratio": 0.029844077761269343,
+    "elbow_flare": 0.04120746486032947,
+    "hand_placement_width": 0.01775548220971124,
+    "head_position": 0.0994007735360118,
+    "is_bottom_position": 0.001140076355960286,
+    "is_top_position": 0.004759073540211837
+  }
+}

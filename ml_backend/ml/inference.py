@@ -1,46 +1,17 @@
 """
 Real-time inference system for SpotBro
-PRODUCTION VERSION: No ghost reps, validated counting, optimized performance
+FULLY FIXED VERSION - Reliable push-up detection with proper state machine
 """
 
 import cv2
 import joblib
 import numpy as np
-import time
 from collections import deque
 from pose_detector import PoseDetector
 from feature_extractor import FeatureExtractor
 
-def _body_fully_visible(self, landmarks, threshold=0.6):
-    """
-    Ensure critical push-up landmarks are visible with confidence
-    Prevents face-only false positives
-    """
-    required = [
-        11, 12,  # shoulders
-        13, 14,  # elbows
-        15, 16,  # wrists
-        23, 24,  # hips
-        25, 26   # knees
-    ]
-
-    return all(
-        landmarks.landmark[i].visibility > threshold
-        for i in required
-    )
-
-
 class FormAnalyzer:
-    """
-    Real-time exercise form analyzer with validated rep counting
-    
-    Key features:
-    - Depth validation (must reach minimum angle)
-    - Duration validation (must take minimum time)
-    - Debouncing (cooldown between reps)
-    - Sustained movement check
-    - Enhanced smoothing
-    """
+    """Real-time exercise form analyzer with robust rep counting"""
     
     def __init__(self, model_path, exercise='pushup', buffer_size=5):
         self.model = joblib.load(model_path)
@@ -48,50 +19,30 @@ class FormAnalyzer:
         self.detector = PoseDetector()
         self.extractor = FeatureExtractor()
         
-        # Prediction smoothing
+        # Prediction buffer for smoothing
         self.prediction_buffer = deque(maxlen=buffer_size)
         
-        # ENHANCED: Rep counter with validation
+        # Rep counter state - FIXED STATE MACHINE
         self.rep_count = 0
-        self.in_down_position = False
-        self.rep_phase = "UP"
-        
-        # NEW: Rep validation tracking
-        self.min_angle_this_rep = 180  # Deepest angle reached
-        self.rep_start_time = 0        # When down phase started
-        self.last_rep_time = 0         # Last successful rep time
-        
-        # NEW: Enhanced smoothing (5 frames = 1 second at 5 FPS)
-        self.angle_buffer = deque(maxlen=5)  # Was 3
+        self.current_state = "WAITING"  # States: WAITING, TOP, DESCENDING, BOTTOM, ASCENDING
+        self.prev_elbow_angle = 180
+        self.frames_in_state = 0
+        self.min_frames_per_state = 3  # Require stability before state change
         
         # Position validation
-        self.invalid_position_frames = 0
-        self.relaxed_mode = False
+        self.in_pushup_position = False
+        self.position_check_frames = 0
+        self.frames_needed_for_position = 5  # Need 5 consecutive valid frames
         
-        # Feedback storage
+        # Store last rep feedback
         self.last_rep_feedback = []
         self.current_rep_issues = []
         
-        # Model classes
+        # Dynamically get classes from model
         self.model_classes = list(self.model.classes_)
-        print(f"✓ Model loaded. Classes: {self.model_classes}")
+        print(f"Model predicts: {self.model_classes}")
         
-        # TUNED: Rep counting thresholds
-        self.DOWN_ANGLE = 110      # Trigger down phase
-        self.UP_ANGLE = 145        # Trigger up phase
-        self.HYSTERESIS = 10       # Buffer zone
-        
-        # NEW: Validation parameters
-        self.MIN_DEPTH_ANGLE = 95       # Must reach ≤95° at bottom
-        self.MIN_REP_DURATION = 0.8     # Must take ≥0.8 seconds
-        self.MAX_REP_DURATION = 5.0     # Must complete <5 seconds
-        self.REP_COOLDOWN = 0.7         # Minimum 0.7s between reps
-        
-        # Statistics
-        self.total_rep_attempts = 0
-        self.rejected_reps = 0
-        
-        # Feedback mapping
+        # Main feedback categories
         self.feedback_map = {
             'GOOD_FORM': "✓ Perfect form!",
             'ELBOWS_FLARED': "⚠ Elbows too wide",
@@ -102,321 +53,309 @@ class FormAnalyzer:
             'BAD_FORM': "⚠ Form issue"
         }
     
-    def get_smoothed_angle(self, angle):
-        """
-        Smooth angle with moving average (5-frame window)
-        Reduces jitter and false triggers
-        """
-        self.angle_buffer.append(angle)
-        if len(self.angle_buffer) == 0:
-            return angle
-        return sum(self.angle_buffer) / len(self.angle_buffer)
-    
-    def _body_fully_visible(self, landmarks, threshold=0.6):
-        """
-        Ensure critical push-up landmarks are visible with confidence
-        Prevents face-only false positives
-        """
-        required_indices = [
-            11, 12,  # shoulders
-            13, 14,  # elbows
-            15, 16,  # wrists
-            23, 24,  # hips
-            25, 26   # knees
-        ]
-
-        for i in required_indices:
-            if landmarks.landmark[i].visibility < threshold:
-                return False
-
-        return True
-    
     def is_in_pushup_position(self, features, landmarks):
         """
-        Validate push-up position with STRICT visibility gating
+        FIXED: Validate if person is in push-up position using ACTUAL extracted features
+        Uses only features that are guaranteed to exist from feature_extractor.py
         """
         try:
             lm = landmarks.landmark
-
-            # 🚨 HARD BLOCK — FULL BODY MUST BE VISIBLE
-            if not self._body_fully_visible(landmarks, threshold=0.7):
-                self.invalid_position_frames += 1
-                return False, "⛔ Full body must be visible"
-
-            # Key body points
-            shoulder_y = lm[12].y
-            hip_y = lm[24].y
-            wrist_y = lm[16].y
-            knee_y = lm[26].y
-
-            # Feature values
-            back_angle = features.get('back_angle', 0)
-            hip_ratio = features.get('hip_height_ratio', 0)
-            knee_angle = features.get('knee_angle', 180)
-
-            # ⚠️ RELAXED MODE (SAFE)
-            if self.relaxed_mode:
-                if wrist_y < shoulder_y - 0.3:
-                    return False, "⚠ Lower hands to ground"
-                return True, "✓ Relaxed mode - counting reps"
-
-            # -------- POSITION CHECKS --------
-
-            # Hands must be near ground
-            if wrist_y < shoulder_y - 0.2:
-                return False, "❌ Hands not on ground"
-
-            # Body must be horizontal
-            body_vertical_diff = abs(shoulder_y - hip_y)
-            if body_vertical_diff > 0.70:
-                return False, "❌ Body not horizontal"
-
-            # Hip height check
-            if hip_ratio < 0.30:
-                return False, "❌ Lift body to plank"
-            elif hip_ratio > 2.0:
-                return False, "❌ Lower into push-up position"
-
-            # Legs straight
-            if knee_angle < 140:
-                return False, "❌ Straighten legs"
-
-            # Back straight
-            if back_angle < 140:
-                return False, "❌ Straighten back"
-
-            # Close enough to floor
-            if shoulder_y < 0.25:
-                return False, "❌ Move closer to ground"
-
-            # ✅ VALID POSITION
-            self.invalid_position_frames = 0
-            return True, "✓ In position - ready to count"
-
+            
+            # Get key body points
+            shoulder_y = (lm[11].y + lm[12].y) / 2
+            hip_y = (lm[23].y + lm[24].y) / 2
+            wrist_y = (lm[15].y + lm[16].y) / 2
+            ankle_y = (lm[27].y + lm[28].y) / 2
+            
+            # Get ACTUAL features from extractor (not imaginary ones)
+            elbow_angle = features.get('elbow_angle_avg', 180)
+            knee_angle = features.get('knee_angle_avg', 180)
+            spine_angle = features.get('spine_angle', 180)
+            hip_sag_ratio = features.get('hip_sag_ratio', 1.0)
+            
+            # CHECK 1: Body should be roughly horizontal (plank position)
+            # In push-up, shoulders and hips should be at similar vertical position
+            body_horizontal_diff = abs(shoulder_y - hip_y)
+            if body_horizontal_diff > 0.30:  # Too much vertical difference
+                return False, "⚠ Get into plank position (body horizontal)"
+            
+            # CHECK 2: Person should be in lower portion of frame (not standing)
+            if shoulder_y < 0.35:  # Too high in frame
+                return False, "⚠ Get down into push-up position"
+            
+            # CHECK 3: Legs should be relatively straight (no knee push-ups)
+            if knee_angle < 160:
+                return False, "⚠ Straighten legs (keep knees locked)"
+            
+            # CHECK 4: Body alignment - spine should be relatively straight
+            if spine_angle < 140:  # Body too bent
+                return False, "⚠ Straighten body (maintain plank)"
+            
+            # CHECK 5: Hips shouldn't be too high or too low
+            if hip_sag_ratio < 0.75:  # Hips way too low
+                return False, "⚠ Lift hips to plank position"
+            elif hip_sag_ratio > 1.25:  # Hips too high
+                return False, "⚠ Lower hips (straight line from head to heels)"
+            
+            # CHECK 6: Arms should be in working range (not fully extended standing)
+            if elbow_angle > 175 and wrist_y < shoulder_y:  # Arms straight but wrists above shoulders
+                return False, "⚠ Position hands on ground below shoulders"
+            
+            # All checks passed!
+            return True, "✓ In position - start exercising"
+            
         except Exception as e:
-            return False, f"⚠ Position check failed: {str(e)}"
-
+            print(f"Position validation error: {e}")
+            return False, "⚠ Position check failed"
+    
     def get_detailed_feedback(self, features, prediction):
-        """Generate specific feedback based on form analysis"""
+        """
+        FIXED: Provide feedback using ONLY features that actually exist
+        """
         issues = []
         suggestions = []
         
         try:
-            elbow_angle = features.get('elbow_angle', 180)
-            back_angle = features.get('back_angle', 180)
-            hip_ratio = features.get('hip_height_ratio', 1.0)
-            elbow_spread = features.get('elbow_spread', 0.0)
-            knee_angle = features.get('knee_angle', 180)
+            # Get ACTUAL features (these are guaranteed to exist)
+            elbow_angle = features.get('elbow_angle_avg', 180)
+            knee_angle = features.get('knee_angle_avg', 180)
+            spine_angle = features.get('spine_angle', 180)
+            hip_sag_ratio = features.get('hip_sag_ratio', 1.0)
+            elbow_flare = features.get('elbow_flare', 0.0)
+            elbow_flexion = features.get('elbow_flexion', 0)
             
-            # Elbow analysis
-            if elbow_angle > 110:
-                issues.append("❌ Elbows flared out")
+            # 1. ELBOW FLARE ANALYSIS
+            if elbow_flare > 0.25:
+                issues.append("⚠ Elbows flared out too much")
                 suggestions.append("→ Keep elbows at 45° from body")
+            elif elbow_flare > 0.18:
+                issues.append("⚠ Elbows slightly wide")
+                suggestions.append("→ Tuck elbows closer to ribs")
             
-            # Depth analysis
-            if elbow_angle > 110 and self.rep_phase == "DOWN":
-                issues.append("❌ Not deep enough")
-                suggestions.append("→ Lower chest to floor")
+            # 2. DEPTH ANALYSIS (using elbow angle)
+            if self.current_state == "BOTTOM":
+                if elbow_angle > 110:
+                    issues.append("⚠ Not deep enough")
+                    suggestions.append("→ Lower chest closer to ground (elbows to 90°)")
+                elif elbow_angle > 95:
+                    issues.append("⚠ Could go slightly deeper")
             
-            # Back/core analysis
-            if back_angle < 155:
-                issues.append("❌ Back sagging")
-                suggestions.append("→ Engage core")
+            # 3. BACK/CORE ANALYSIS (using spine angle and hip ratio)
+            if spine_angle < 150:
+                issues.append("⚠ Back sagging (hips dropping)")
+                suggestions.append("→ Engage core, keep body straight")
+            elif spine_angle < 165:
+                issues.append("⚠ Slight back sag")
+                suggestions.append("→ Tighten core muscles")
             
-            if hip_ratio < 0.80:
-                issues.append("❌ Hips too low")
-                suggestions.append("→ Raise hips")
-            elif hip_ratio > 1.15:
-                issues.append("❌ Hips too high")
-                suggestions.append("→ Lower hips")
+            if hip_sag_ratio < 0.80:
+                issues.append("⚠ Hips too low")
+                suggestions.append("→ Raise hips to plank position")
+            elif hip_sag_ratio > 1.15:
+                issues.append("⚠ Hips too high (piking)")
+                suggestions.append("→ Lower hips, maintain straight line")
             
-            # Arm spread
-            if elbow_spread > 0.15:
-                issues.append("❌ Arms too wide")
-                suggestions.append("→ Elbows closer to ribs")
-            
-            # Legs
-            if knee_angle < 160:
+            # 4. LEG ANALYSIS
+            if knee_angle < 165:
                 issues.append("⚠ Knees bending")
-                suggestions.append("→ Keep legs straight")
+                suggestions.append("→ Keep legs straight and locked")
             
+            # 5. ARM PLACEMENT
+            if elbow_flare > 0.20:
+                issues.append("⚠ Arms too far from body")
+                suggestions.append("→ Position hands shoulder-width apart")
+            
+            # If no issues found
             if not issues:
                 return ["✓ Perfect form!"], ["Keep it up!"]
             
         except Exception as e:
-            print(f"Feedback error: {e}")
-            return ["Analyzing..."], [""]
+            print(f"Error in feedback generation: {e}")
+            return ["Analysis in progress..."], [""]
         
         return issues, suggestions
     
-    def validate_rep(self, min_angle, duration):
+    def update_rep_state_machine(self, elbow_angle):
         """
-        Validate if movement qualifies as a proper rep
-        
-        Returns: (is_valid, rejection_reason)
+        FIXED: Robust state machine for rep counting
+        Uses hysteresis and frame counting to prevent false triggers
         """
-        # Check 1: Depth validation
-        if min_angle > self.MIN_DEPTH_ANGLE:
-            return False, f"Insufficient depth ({min_angle:.0f}° > {self.MIN_DEPTH_ANGLE}°)"
+        # Define angle thresholds with hysteresis
+        TOP_THRESHOLD = 165      # Arms nearly straight
+        BOTTOM_THRESHOLD = 100   # Arms bent to ~90 degrees
+        TRANSITION_ZONE = 130    # Middle zone between top and bottom
         
-        # Check 2: Duration validation (too fast)
-        if duration < self.MIN_REP_DURATION:
-            return False, f"Too fast ({duration:.1f}s < {self.MIN_REP_DURATION}s)"
+        state_changed = False
         
-        # Check 3: Duration validation (too slow/paused)
-        if duration > self.MAX_REP_DURATION:
-            return False, f"Too slow ({duration:.1f}s > {self.MAX_REP_DURATION}s)"
+        # Increment frames in current state
+        self.frames_in_state += 1
         
-        # Check 4: Cooldown (prevent double counting)
-        time_since_last = time.time() - self.last_rep_time
-        if time_since_last < self.REP_COOLDOWN:
-            return False, f"Too soon ({time_since_last:.1f}s < {self.REP_COOLDOWN}s)"
+        # STATE MACHINE
+        if self.current_state == "WAITING":
+            # Waiting for first valid top position
+            if elbow_angle >= TOP_THRESHOLD and self.frames_in_state >= self.min_frames_per_state:
+                self.current_state = "TOP"
+                self.frames_in_state = 0
+                state_changed = True
+                print(f"State: WAITING -> TOP (angle: {elbow_angle:.1f}°)")
         
-        # All checks passed
-        return True, "Valid rep"
+        elif self.current_state == "TOP":
+            # At top, waiting to descend
+            if elbow_angle < TRANSITION_ZONE:
+                self.current_state = "DESCENDING"
+                self.frames_in_state = 0
+                state_changed = True
+                print(f"State: TOP -> DESCENDING (angle: {elbow_angle:.1f}°)")
+        
+        elif self.current_state == "DESCENDING":
+            # Descending, waiting to reach bottom
+            if elbow_angle <= BOTTOM_THRESHOLD and self.frames_in_state >= self.min_frames_per_state:
+                self.current_state = "BOTTOM"
+                self.frames_in_state = 0
+                self.current_rep_issues = self.get_detailed_feedback(
+                    {'elbow_angle_avg': elbow_angle}, None
+                )[0].copy()
+                state_changed = True
+                print(f"State: DESCENDING -> BOTTOM (angle: {elbow_angle:.1f}°)")
+        
+        elif self.current_state == "BOTTOM":
+            # At bottom, waiting to ascend
+            if elbow_angle > TRANSITION_ZONE:
+                self.current_state = "ASCENDING"
+                self.frames_in_state = 0
+                state_changed = True
+                print(f"State: BOTTOM -> ASCENDING (angle: {elbow_angle:.1f}°)")
+        
+        elif self.current_state == "ASCENDING":
+            # Ascending, waiting to reach top (COMPLETE REP!)
+            if elbow_angle >= TOP_THRESHOLD and self.frames_in_state >= self.min_frames_per_state:
+                self.current_state = "TOP"
+                self.frames_in_state = 0
+                self.rep_count += 1  # COUNT THE REP!
+                self.last_rep_feedback = self.current_rep_issues.copy()
+                state_changed = True
+                print(f"State: ASCENDING -> TOP (angle: {elbow_angle:.1f}°) - REP #{self.rep_count} COUNTED!")
+        
+        # Store previous angle
+        self.prev_elbow_angle = elbow_angle
+        
+        return state_changed
     
-    def _rule_based_classification(self, features):
-        """
-        Rule-based classification when ML model is uncertain
-        (useful for small datasets)
-        """
-        elbow_angle = features.get('elbow_angle', 180)
-        back_angle = features.get('back_angle', 180)
-        hip_ratio = features.get('hip_height_ratio', 1.0)
-        elbow_spread = features.get('elbow_spread', 0.0)
-        
-        issues = []
-        
-        # Check each form aspect
-        if elbow_spread > 0.15:
-            issues.append('ELBOWS_FLARED')
-        
-        if back_angle < 155:
-            issues.append('BACK_SAGGING')
-        
-        if hip_ratio < 0.80 or hip_ratio > 1.15:
-            issues.append('BACK_SAGGING')
-        
-        if elbow_angle > 120 and self.rep_phase == "DOWN":
-            issues.append('INCOMPLETE_DEPTH')
-        
-        # Return classification
-        if len(issues) == 0:
-            return 'GOOD_FORM'
-        elif len(issues) == 1:
-            return issues[0]
-        else:
-            return 'FORM_ERROR'
+    def get_rep_phase_display(self):
+        """Convert state machine state to display string"""
+        state_map = {
+            "WAITING": "GET READY",
+            "TOP": "TOP",
+            "DESCENDING": "GOING DOWN",
+            "BOTTOM": "BOTTOM",
+            "ASCENDING": "PUSHING UP"
+        }
+        return state_map.get(self.current_state, "READY")
     
     def analyze_frame(self, frame):
-        """
-        Analyze frame with validated rep counting
-        
-        Returns: Dict with analysis results
-        """
+        """Analyze a single frame - FULLY FIXED VERSION"""
         try:
             # Detect pose
             landmarks = self.detector.detect(frame)
             
             if landmarks is None:
-                return self._no_person_response()
+                return {
+                    'prediction': None,
+                    'confidence': 0.0,
+                    'feedback': "⚠ No person detected - stand in frame",
+                    'detailed_issues': ["Position yourself in camera view"],
+                    'suggestions': ["Ensure full body is visible"],
+                    'rep_count': self.rep_count,
+                    'landmarks': None,
+                    'rep_phase': self.get_rep_phase_display(),
+                    'elbow_angle': 0,
+                    'has_data': False,
+                    'position_valid': False,
+                    'position_msg': "No pose detected"
+                }
             
             # Extract features
-            features = self.extractor.extract_pushup_features(landmarks) if self.exercise == 'pushup' else None
+            if self.exercise == 'pushup':
+                features = self.extractor.extract_pushup_features(landmarks)
+            else:
+                features = None
             
             if features is None:
-                return self._no_features_response(landmarks)
+                return {
+                    'prediction': None,
+                    'confidence': 0.0,
+                    'feedback': "⚠ Pose detection failed",
+                    'detailed_issues': ["Can't analyze pose"],
+                    'suggestions': ["Try side view angle"],
+                    'rep_count': self.rep_count,
+                    'landmarks': landmarks,
+                    'rep_phase': self.get_rep_phase_display(),
+                    'elbow_angle': 0,
+                    'has_data': False,
+                    'position_valid': False,
+                    'position_msg': "Feature extraction failed"
+                }
             
-            # Validate position
+            # VALIDATE PUSH-UP POSITION
             position_valid, position_msg = self.is_in_pushup_position(features, landmarks)
             
-            # Track invalid frames (enable relaxed mode if needed)
-            if not position_valid:
-                self.invalid_position_frames += 1
-                if self.invalid_position_frames > 20 and not self.relaxed_mode:
-                    print("⚠ Entering relaxed mode")
-                    self.relaxed_mode = True
+            # Update position tracking with hysteresis
+            if position_valid:
+                self.position_check_frames += 1
+                if self.position_check_frames >= self.frames_needed_for_position:
+                    self.in_pushup_position = True
+            else:
+                self.position_check_frames = 0
+                self.in_pushup_position = False
+                # Reset state machine if leaving position
+                if self.current_state != "WAITING":
+                    self.current_state = "WAITING"
+                    self.frames_in_state = 0
             
             # ML Classification
             feature_vector = [features[k] for k in features]
             prediction = self.model.predict([feature_vector])[0]
             confidence = self.model.predict_proba([feature_vector]).max()
             
-            # 🆕 FALLBACK: If confidence is low, use rule-based system
-            if confidence < 0.6:
-                prediction = self._rule_based_classification(features)
-                confidence = 0.7  # Default confidence for rule-based
-
             # Temporal smoothing
             self.prediction_buffer.append(prediction)
-            final_prediction = max(set(self.prediction_buffer), key=self.prediction_buffer.count)
+            final_prediction = max(set(self.prediction_buffer), 
+                                  key=self.prediction_buffer.count)
             
-            # Get feedback
+            # Get detailed feedback
             issues, suggestions = self.get_detailed_feedback(features, final_prediction)
             
-            # VALIDATED REP COUNTING
-            current_elbow_angle = features.get('elbow_angle', 180)
-            smoothed_angle = self.get_smoothed_angle(current_elbow_angle)
-            
+            # REP COUNTING - ONLY IF IN VALID POSITION
+            current_elbow_angle = features.get('elbow_angle_avg', 180)
             feedback = self.feedback_map.get(final_prediction, f"⚠ {final_prediction}")
             
-            # Only count if in valid position (or relaxed mode)
-            if position_valid or self.relaxed_mode:
+            if self.in_pushup_position:
+                # Update state machine
+                state_changed = self.update_rep_state_machine(current_elbow_angle)
                 
-                # Track minimum angle during down phase
-                if self.in_down_position:
-                    self.min_angle_this_rep = min(self.min_angle_this_rep, smoothed_angle)
-                
-                # DOWN phase detection
-                if smoothed_angle < self.DOWN_ANGLE and not self.in_down_position:
-                    self.rep_phase = "DOWN"
-                    self.in_down_position = True
-                    self.min_angle_this_rep = smoothed_angle
-                    self.rep_start_time = time.time()
-                    self.current_rep_issues = issues.copy()
-                    print(f"📉 DOWN phase | Angle: {smoothed_angle:.1f}°")
-                
-                # UP phase detection with VALIDATION
-                elif smoothed_angle > self.UP_ANGLE and self.in_down_position:
-                    self.rep_phase = "UP"
-                    self.in_down_position = False
-                    
-                    # Calculate duration
-                    rep_duration = time.time() - self.rep_start_time
-                    
-                    # VALIDATE REP
-                    self.total_rep_attempts += 1
-                    is_valid, rejection_reason = self.validate_rep(
-                        self.min_angle_this_rep, 
-                        rep_duration
-                    )
-                    
-                    if is_valid:
-                        # VALID REP - COUNT IT
-                        self.rep_count += 1
-                        self.last_rep_time = time.time()
-                        self.last_rep_feedback = self.current_rep_issues.copy()
-                        
-                        print(f"✓ REP #{self.rep_count} | Depth: {self.min_angle_this_rep:.1f}° | Time: {rep_duration:.1f}s")
-                        
-                        # Feedback
-                        if len(self.last_rep_feedback) == 1 and "Perfect" in self.last_rep_feedback[0]:
-                            feedback = f"✓ Rep #{self.rep_count} - PERFECT! 🎉"
-                        else:
-                            feedback = f"Rep #{self.rep_count} - " + ", ".join(self.last_rep_feedback[:2])
+                # Generate feedback based on state
+                if state_changed and self.current_state == "TOP" and self.rep_count > 0:
+                    # Rep just completed!
+                    if len(self.last_rep_feedback) == 1 and "Perfect" in self.last_rep_feedback[0]:
+                        feedback = f"✓ Rep #{self.rep_count} - PERFECT! 🎉"
                     else:
-                        # INVALID REP - REJECT IT
-                        self.rejected_reps += 1
-                        print(f"✗ Rep rejected | Reason: {rejection_reason}")
-                        feedback = f"✗ Rep rejected: {rejection_reason}"
-                    
-                    # Reset for next rep
-                    self.min_angle_this_rep = 180
+                        feedback = f"Rep #{self.rep_count} - " + ", ".join(self.last_rep_feedback[:2])
+                else:
+                    # Show current phase
+                    phase_feedback = {
+                        "TOP": "✓ Ready - descend slowly",
+                        "DESCENDING": "↓ Going down - keep form",
+                        "BOTTOM": "✓ Good depth - push up!",
+                        "ASCENDING": "↑ Pushing up - full extension"
+                    }
+                    feedback = phase_feedback.get(self.current_state, position_msg)
             else:
                 # Not in valid position
                 feedback = position_msg
+                # Show how many frames until position is validated
+                if position_valid and self.position_check_frames < self.frames_needed_for_position:
+                    feedback = f"⚠ Hold position... ({self.position_check_frames}/{self.frames_needed_for_position})"
             
-            # Return results
             return {
                 'prediction': final_prediction,
                 'confidence': confidence,
@@ -425,199 +364,180 @@ class FormAnalyzer:
                 'suggestions': suggestions,
                 'rep_count': self.rep_count,
                 'landmarks': landmarks,
-                'rep_phase': self.rep_phase,
-                'elbow_angle': smoothed_angle,
+                'rep_phase': self.get_rep_phase_display(),
+                'elbow_angle': current_elbow_angle,
                 'has_data': True,
-                'position_valid': position_valid or self.relaxed_mode,
-                'position_msg': position_msg,
-                'rejected_reps': self.rejected_reps,
-                'total_attempts': self.total_rep_attempts
+                'position_valid': self.in_pushup_position,
+                'position_msg': position_msg
             }
         
         except Exception as e:
-            print(f"❌ Frame analysis error: {e}")
-            return self._error_response()
-    
-    def _no_person_response(self):
-        """Return response when no person detected"""
-        return {
-            'prediction': None,
-            'confidence': 0.0,
-            'feedback': "⚠ No person detected",
-            'detailed_issues': ["Stand in frame"],
-            'suggestions': ["Ensure full body visible"],
-            'rep_count': self.rep_count,
-            'landmarks': None,
-            'rep_phase': self.rep_phase,
-            'elbow_angle': 0,
-            'has_data': False,
-            'position_valid': False,
-            'position_msg': "No pose detected",
-            'rejected_reps': self.rejected_reps,
-            'total_attempts': self.total_rep_attempts
-        }
-    
-    def _no_features_response(self, landmarks):
-        """Return response when features can't be extracted"""
-        return {
-            'prediction': None,
-            'confidence': 0.0,
-            'feedback': "⚠ Pose detection failed",
-            'detailed_issues': ["Adjust position"],
-            'suggestions': ["Try side view"],
-            'rep_count': self.rep_count,
-            'landmarks': landmarks,
-            'rep_phase': self.rep_phase,
-            'elbow_angle': 0,
-            'has_data': False,
-            'position_valid': False,
-            'position_msg': "Feature extraction failed",
-            'rejected_reps': self.rejected_reps,
-            'total_attempts': self.total_rep_attempts
-        }
-    
-    def _error_response(self):
-        """Return response on error"""
-        return {
-            'prediction': None,
-            'confidence': 0.0,
-            'feedback': "⚠ Analysis error",
-            'detailed_issues': ["System recovering..."],
-            'suggestions': [""],
-            'rep_count': self.rep_count,
-            'landmarks': None,
-            'rep_phase': self.rep_phase,
-            'elbow_angle': 0,
-            'has_data': False,
-            'position_valid': False,
-            'position_msg': "Error occurred",
-            'rejected_reps': self.rejected_reps,
-            'total_attempts': self.total_rep_attempts
-        }
+            print(f"Error in analyze_frame: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                'prediction': None,
+                'confidence': 0.0,
+                'feedback': "⚠ Analysis error - continuing...",
+                'detailed_issues': ["System recovering..."],
+                'suggestions': [""],
+                'rep_count': self.rep_count,
+                'landmarks': None,
+                'rep_phase': self.get_rep_phase_display(),
+                'elbow_angle': 0,
+                'has_data': False,
+                'position_valid': False,
+                'position_msg': "Error occurred"
+            }
     
     def visualize(self, frame, result):
-        """Draw analysis results on frame"""
+        """Draw results on frame - ENHANCED VERSION"""
         try:
             # Draw skeleton
-            if result.get('landmarks') and result.get('has_data'):
+            if result.get('landmarks') and result.get('has_data', False):
                 self.detector.draw_landmarks(frame, result['landmarks'])
             
-            # Color based on state
+            # Color based on position and form
             position_valid = result.get('position_valid', False)
             issues = result.get('detailed_issues', [])
             
             if not position_valid:
-                color = (0, 0, 255)  # Red
-            elif not issues or "Perfect" in str(issues):
-                color = (0, 255, 0)  # Green
+                color = (0, 0, 255)  # Red - not in position
+            elif not issues or "Perfect form" in str(issues):
+                color = (0, 255, 0)  # Green - perfect
+            elif len(issues) <= 1:
+                color = (0, 255, 255)  # Yellow - minor issues
             else:
-                color = (0, 165, 255)  # Orange
+                color = (0, 165, 255)  # Orange - multiple issues
             
-            # Main feedback (larger font)
+            # Main feedback
             feedback = result.get('feedback', 'Initializing...')
             cv2.putText(frame, feedback, (10, 40),
                        cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 3)
             
-            # Position status
-            position_status = "✓ IN POSITION" if position_valid else "✗ NOT IN POSITION"
-            position_color = (0, 255, 0) if position_valid else (0, 0, 255)
-            cv2.putText(frame, position_status, (10, 80),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, position_color, 2)
-            
-            # Rep count (large, prominent)
+            # Rep count (large and prominent)
             rep_count = result.get('rep_count', 0)
-            cv2.putText(frame, f"Reps: {rep_count}", (10, 130),
+            cv2.putText(frame, f"REPS: {rep_count}", (10, 100),
                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 4)
             
-            # Rep phase
+            # State display (ONLY if in position)
             if position_valid:
-                rep_phase = result.get('rep_phase', 'UP')
-                phase_color = (0, 255, 255) if rep_phase == "DOWN" else (255, 255, 255)
-                cv2.putText(frame, f"Phase: {rep_phase}", (10, 175),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, phase_color, 2)
-            
-            # Statistics (bottom left)
-            rejected = result.get('rejected_reps', 0)
-            total = result.get('total_attempts', 0)
-            if total > 0:
-                accuracy = ((total - rejected) / total) * 100
-                cv2.putText(frame, f"Accuracy: {accuracy:.0f}% ({total-rejected}/{total})", 
-                           (10, frame.shape[0] - 20),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
-            
-            # Debug info (bottom center)
-            if result.get('has_data'):
+                rep_phase = result.get('rep_phase', 'READY')
+                phase_color = {
+                    "TOP": (0, 255, 0),
+                    "GOING DOWN": (0, 255, 255),
+                    "BOTTOM": (0, 165, 255),
+                    "PUSHING UP": (255, 255, 0),
+                    "GET READY": (255, 255, 255)
+                }.get(rep_phase, (255, 255, 255))
+                
+                cv2.putText(frame, f"Phase: {rep_phase}", (10, 150),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.8, phase_color, 2)
+                
+                # Elbow angle indicator
                 elbow_angle = result.get('elbow_angle', 0)
-                cv2.putText(frame, f"Elbow: {elbow_angle:.1f}°", 
-                           (frame.shape[1]//2 - 100, frame.shape[0] - 20),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+                cv2.putText(frame, f"Elbow: {elbow_angle:.0f}°", (10, 190),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2)
+            
+            # Detailed issues (right side) - ONLY if in position
+            if result.get('has_data', False) and position_valid:
+                y_offset = 40
+                cv2.putText(frame, "Current Form:", (frame.shape[1] - 350, y_offset),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                y_offset += 40
+                
+                for issue in issues[:4]:
+                    cv2.putText(frame, issue, (frame.shape[1] - 350, y_offset),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 200, 255), 2)
+                    y_offset += 30
+                
+                # Suggestions
+                suggestions = result.get('suggestions', [])
+                if suggestions and suggestions[0]:
+                    y_offset += 10
+                    cv2.putText(frame, "To improve:", (frame.shape[1] - 350, y_offset),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                    y_offset += 40
+                    
+                    for suggestion in suggestions[:3]:
+                        if suggestion:
+                            cv2.putText(frame, suggestion, (frame.shape[1] - 350, y_offset),
+                                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (100, 255, 100), 2)
+                            y_offset += 28
         
         except Exception as e:
             print(f"Visualization error: {e}")
+            cv2.putText(frame, "Display error", (10, 30),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         
         return frame
     
     def run(self):
-        """Run real-time analysis with keyboard controls"""
+        """Run real-time analysis"""
         cap = cv2.VideoCapture(0)
         
-        print("=" * 70)
-        print("SPOTBRO - PRODUCTION REP COUNTER (No Ghost Reps)")
-        print("=" * 70)
-        print(f"Validation: Depth ≤{self.MIN_DEPTH_ANGLE}° | Duration {self.MIN_REP_DURATION}-{self.MAX_REP_DURATION}s")
-        print(f"Thresholds: DOWN={self.DOWN_ANGLE}° | UP={self.UP_ANGLE}°")
-        print("Controls: 'q'=Quit | 'r'=Reset | 's'=Stats")
-        print("=" * 70)
+        print("=" * 60)
+        print("SPOTBRO - FIXED PUSH-UP ANALYZER")
+        print("=" * 60)
+        print("Controls:")
+        print("  'q' - Quit")
+        print("  'r' - Reset rep counter")
+        print("  's' - Show last rep summary")
+        print("-" * 60)
+        print("\nRep Counting Logic:")
+        print("  State Machine: WAITING → TOP → DESCENDING → BOTTOM → ASCENDING → TOP")
+        print("  Rep counted when: Complete cycle from TOP → BOTTOM → TOP")
+        print("  Requires: 3+ frames in each key state for stability")
+        print("-" * 60)
+        print("\nPosition Validation:")
+        print("  - Body horizontal, legs straight, proper plank")
+        print("  - Must hold valid position for 5 frames")
+        print("  - Red = Not ready | Yellow = Stabilizing | Green = Counting")
+        print("=" * 60)
         
         while cap.isOpened():
-            try:
-                ret, frame = cap.read()
-                if not ret:
-                    continue
-                
-                frame = cv2.flip(frame, 1)
-                result = self.analyze_frame(frame)
-                frame = self.visualize(frame, result)
-                
-                cv2.imshow('SpotBro - Production Counter', frame)
-                
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('q'):
-                    break
-                elif key == ord('r'):
-                    self.rep_count = 0
-                    self.rejected_reps = 0
-                    self.total_rep_attempts = 0
-                    print("✓ Counter reset")
-                elif key == ord('s'):
-                    self._print_stats()
-                
-            except KeyboardInterrupt:
+            ret, frame = cap.read()
+            if not ret:
                 break
-            except Exception as e:
-                print(f"Frame error: {e}")
-                continue
+            
+            frame = cv2.flip(frame, 1)
+            result = self.analyze_frame(frame)
+            frame = self.visualize(frame, result)
+            
+            cv2.imshow('SpotBro - Fixed Push-up Analyzer', frame)
+            
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q'):
+                break
+            elif key == ord('r'):
+                self.rep_count = 0
+                self.current_state = "WAITING"
+                self.frames_in_state = 0
+                self.last_rep_feedback = []
+                print("\n✓ Rep counter reset")
+            elif key == ord('s'):
+                print("\n" + "=" * 60)
+                print(f"LAST REP SUMMARY (Rep #{self.rep_count}):")
+                print("=" * 60)
+                if self.last_rep_feedback:
+                    for issue in self.last_rep_feedback:
+                        print(f"  {issue}")
+                else:
+                    print("  No issues - Perfect form!")
+                print("=" * 60 + "\n")
         
-        self._print_stats()
+        print("\n" + "=" * 60)
+        print("WORKOUT SUMMARY")
+        print("=" * 60)
+        print(f"Total Reps: {self.rep_count}")
+        print("=" * 60)
+        
         cap.release()
         cv2.destroyAllWindows()
         self.detector.close()
-    
-    def _print_stats(self):
-        """Print session statistics"""
-        print("\n" + "=" * 70)
-        print("SESSION STATISTICS")
-        print("=" * 70)
-        print(f"Valid reps: {self.rep_count}")
-        print(f"Rejected reps: {self.rejected_reps}")
-        print(f"Total attempts: {self.total_rep_attempts}")
-        if self.total_rep_attempts > 0:
-            accuracy = (self.rep_count / self.total_rep_attempts) * 100
-            print(f"Accuracy: {accuracy:.1f}%")
-        print("=" * 70 + "\n")
 
 if __name__ == "__main__":
-    print("Initializing SpotBro Production Counter...")
+    print("Initializing Fixed SpotBro Push-up Analyzer...")
     try:
         analyzer = FormAnalyzer(
             model_path='ml/models/pushup_form_classifier.pkl',
@@ -626,3 +546,5 @@ if __name__ == "__main__":
         analyzer.run()
     except Exception as e:
         print(f"Failed to start: {e}")
+        import traceback
+        traceback.print_exc()

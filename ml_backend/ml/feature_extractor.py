@@ -1,78 +1,12 @@
 """
-Biomechanical Feature Extraction
-Converts pose landmarks to angles, ratios, and distances
+Biomechanical Feature Extraction - FIXED TO MATCH MODEL
+Extracts exactly 16 features as expected by the trained model
 """
 
 import numpy as np
 
 class FeatureExtractor:
     """Extract biomechanical features from pose landmarks"""
-    
-    def extract_squat_features(self, landmarks):
-        """
-        Extract features for squat exercise
-        
-        Key angles and measurements:
-        - Knee angle (should reach ~90° at bottom)
-        - Hip depth (hip should go below knee)
-        - Back angle (should stay upright)
-        - Knee alignment (shouldn't cave inward)
-        - Ankle angle
-        """
-        try:
-            lm = landmarks.landmark
-            
-            # Use right side
-            shoulder = lm[12]
-            hip = lm[24]
-            knee = lm[26]
-            ankle = lm[28]
-            heel = lm[30] if len(lm) > 30 else ankle
-            
-            # Feature 1: Knee angle (hip-knee-ankle)
-            knee_angle = self.calculate_angle(hip, knee, ankle)
-            
-            # Feature 2: Hip depth ratio (hip y-position relative to knee)
-            hip_depth_ratio = hip.y / knee.y
-            
-            # Feature 3: Back angle (shoulder-hip-knee)
-            back_angle = self.calculate_angle(shoulder, hip, knee)
-            
-            # Feature 4: Knee alignment (lateral knee-ankle distance)
-            knee_alignment = abs(knee.x - ankle.x)
-            
-            # Feature 5: Ankle angle (knee-ankle-heel approximation)
-            class VirtualPoint:
-                def __init__(self, x, y):
-                    self.x = x
-                    self.y = y
-            
-            forward_ref = VirtualPoint(ankle.x + 0.1, ankle.y)
-            ankle_angle = self.calculate_angle(knee, ankle, forward_ref)
-            
-            # Feature 6: Torso length (shoulder to hip distance)
-            torso_length = self.calculate_distance(shoulder, hip)
-            
-            # Feature 7: Hip-knee distance
-            hip_knee_dist = self.calculate_distance(hip, knee)
-            
-            # Feature 8: Knee-ankle distance
-            knee_ankle_dist = self.calculate_distance(knee, ankle)
-            
-            return {
-                'knee_angle': knee_angle,
-                'hip_depth_ratio': hip_depth_ratio,
-                'back_angle': back_angle,
-                'knee_alignment': knee_alignment,
-                'ankle_angle': ankle_angle,
-                'torso_length': torso_length,
-                'hip_knee_dist': hip_knee_dist,
-                'knee_ankle_dist': knee_ankle_dist
-            }
-        
-        except Exception as e:
-            print(f"Squat feature extraction error: {e}")
-            return None
     
     @staticmethod
     def calculate_angle(point1, point2, point3):
@@ -107,72 +41,164 @@ class FeatureExtractor:
     
     def extract_pushup_features(self, landmarks):
         """
-        Extract features specific to push-up exercise
+        Extract EXACTLY 16 features for push-up exercise (matching trained model)
         
-        Landmarks indices (MediaPipe):
-        11 = Left Shoulder    12 = Right Shoulder
-        13 = Left Elbow       14 = Right Elbow
-        15 = Left Wrist       16 = Right Wrist
-        23 = Left Hip         24 = Right Hip
-        25 = Left Knee        26 = Right Knee
-        27 = Left Ankle       28 = Right Ankle
+        Expected features:
+        1. torso_length
+        2. shoulder_width_norm
+        3. elbow_angle_avg
+        4. hip_width_norm
+        5. knee_angle_avg
+        6. spine_angle
+        7. com_x_norm
+        8. com_y_norm
+        9. elbow_flexion
+        10. body_alignment
+        11. hip_sag_ratio
+        12. elbow_flare
+        13. hand_placement_width
+        14. head_position
+        15. is_bottom_position
+        16. is_top_position
         """
         try:
-            # IMPORTANT: Access landmarks using .landmark attribute
+            # Access landmarks using .landmark attribute
             lm = landmarks.landmark
             
-            # Use right side (can average with left for robustness)
-            shoulder = lm[12]
-            elbow = lm[14]
-            wrist = lm[16]
-            hip = lm[24]
-            knee = lm[26]
-            ankle = lm[28]
+            # Key body points (using both sides for averaging)
+            left_shoulder = lm[11]
+            right_shoulder = lm[12]
+            left_elbow = lm[13]
+            right_elbow = lm[14]
+            left_wrist = lm[15]
+            right_wrist = lm[16]
+            left_hip = lm[23]
+            right_hip = lm[24]
+            left_knee = lm[25]
+            right_knee = lm[26]
+            left_ankle = lm[27]
+            right_ankle = lm[28]
+            nose = lm[0]
             
-            # Feature 1: Elbow angle (should be ~90° at bottom, 180° at top)
-            elbow_angle = self.calculate_angle(shoulder, elbow, wrist)
+            # === FEATURE 1: torso_length ===
+            # Distance from shoulders to hips (average both sides)
+            torso_left = self.calculate_distance(left_shoulder, left_hip)
+            torso_right = self.calculate_distance(right_shoulder, right_hip)
+            torso_length = (torso_left + torso_right) / 2
             
-            # Feature 2: Back alignment (should be ~180° - straight line)
-            back_angle = self.calculate_angle(shoulder, hip, ankle)
+            # === FEATURE 2: shoulder_width_norm ===
+            # Shoulder width normalized by torso length
+            shoulder_width = self.calculate_distance(left_shoulder, right_shoulder)
+            shoulder_width_norm = shoulder_width / (torso_length + 1e-6)
             
-            # Feature 3: Hip height ratio (detect sagging)
-            hip_height_ratio = hip.y / shoulder.y
+            # === FEATURE 3: elbow_angle_avg ===
+            # Average elbow angle (both arms)
+            left_elbow_angle = self.calculate_angle(left_shoulder, left_elbow, left_wrist)
+            right_elbow_angle = self.calculate_angle(right_shoulder, right_elbow, right_wrist)
+            elbow_angle_avg = (left_elbow_angle + right_elbow_angle) / 2
             
-            # Feature 4: Torso length (shoulder to hip distance)
-            torso_length = self.calculate_distance(shoulder, hip)
+            # === FEATURE 4: hip_width_norm ===
+            # Hip width normalized by torso length
+            hip_width = self.calculate_distance(left_hip, right_hip)
+            hip_width_norm = hip_width / (torso_length + 1e-6)
             
-            # Feature 5: Body tilt (forward lean)
-            # Create a virtual point above shoulder for vertical reference
+            # === FEATURE 5: knee_angle_avg ===
+            # Average knee angle (both legs)
+            left_knee_angle = self.calculate_angle(left_hip, left_knee, left_ankle)
+            right_knee_angle = self.calculate_angle(right_hip, right_knee, right_ankle)
+            knee_angle_avg = (left_knee_angle + right_knee_angle) / 2
+            
+            # === FEATURE 6: spine_angle ===
+            # Angle of spine (shoulder to hip alignment)
+            # Use average shoulder and hip positions
+            avg_shoulder_x = (left_shoulder.x + right_shoulder.x) / 2
+            avg_shoulder_y = (left_shoulder.y + right_shoulder.y) / 2
+            avg_hip_x = (left_hip.x + right_hip.x) / 2
+            avg_hip_y = (left_hip.y + right_hip.y) / 2
+            avg_ankle_x = (left_ankle.x + right_ankle.x) / 2
+            avg_ankle_y = (left_ankle.y + right_ankle.y) / 2
+            
+            # Create virtual points for angle calculation
             class VirtualPoint:
                 def __init__(self, x, y):
                     self.x = x
                     self.y = y
             
-            vertical_ref = VirtualPoint(shoulder.x, shoulder.y - 0.1)
-            body_tilt = self.calculate_angle(vertical_ref, shoulder, hip)
+            shoulder_point = VirtualPoint(avg_shoulder_x, avg_shoulder_y)
+            hip_point = VirtualPoint(avg_hip_x, avg_hip_y)
+            ankle_point = VirtualPoint(avg_ankle_x, avg_ankle_y)
             
-            # Feature 6: Elbow spread (how far elbows are from body)
-            elbow_spread = abs(elbow.x - shoulder.x)
+            spine_angle = self.calculate_angle(shoulder_point, hip_point, ankle_point)
             
-            # Feature 7: Shoulder-hip alignment (lateral)
-            lateral_alignment = abs(shoulder.x - hip.x)
+            # === FEATURE 7: com_x_norm ===
+            # Center of mass X position (normalized)
+            com_x = (avg_shoulder_x + avg_hip_x) / 2
+            com_x_norm = com_x
             
-            # Feature 8: Knee bend (should be minimal in plank)
-            knee_angle = self.calculate_angle(hip, knee, ankle)
+            # === FEATURE 8: com_y_norm ===
+            # Center of mass Y position (normalized)
+            com_y = (avg_shoulder_y + avg_hip_y) / 2
+            com_y_norm = com_y
             
+            # === FEATURE 9: elbow_flexion ===
+            # Degree of elbow bend (180 - elbow_angle)
+            elbow_flexion = 180 - elbow_angle_avg
+            
+            # === FEATURE 10: body_alignment ===
+            # How straight the body is (shoulder-hip-ankle alignment)
+            body_alignment = spine_angle
+            
+            # === FEATURE 11: hip_sag_ratio ===
+            # Hip position relative to shoulder-ankle line (detect sagging)
+            # Higher value = hips sagging lower
+            hip_sag_ratio = avg_hip_y / avg_shoulder_y
+            
+            # === FEATURE 12: elbow_flare ===
+            # How far elbows stick out from body (lateral distance)
+            left_elbow_flare = abs(left_elbow.x - left_shoulder.x)
+            right_elbow_flare = abs(right_elbow.x - right_shoulder.x)
+            elbow_flare = (left_elbow_flare + right_elbow_flare) / 2
+            
+            # === FEATURE 13: hand_placement_width ===
+            # Distance between hands (wrists)
+            hand_placement_width = self.calculate_distance(left_wrist, right_wrist)
+            
+            # === FEATURE 14: head_position ===
+            # Head position relative to shoulders (forward/backward)
+            head_position = nose.y - avg_shoulder_y
+            
+            # === FEATURE 15: is_bottom_position ===
+            # Binary: Is person at bottom of push-up? (elbow < 100 degrees)
+            is_bottom_position = 1.0 if elbow_angle_avg < 100 else 0.0
+            
+            # === FEATURE 16: is_top_position ===
+            # Binary: Is person at top of push-up? (elbow > 160 degrees)
+            is_top_position = 1.0 if elbow_angle_avg > 160 else 0.0
+            
+            # Return features in EXACT order expected by model
             return {
-                'elbow_angle': elbow_angle,
-                'back_angle': back_angle,
-                'hip_height_ratio': hip_height_ratio,
                 'torso_length': torso_length,
-                'body_tilt': body_tilt,
-                'elbow_spread': elbow_spread,
-                'lateral_alignment': lateral_alignment,
-                'knee_angle': knee_angle
+                'shoulder_width_norm': shoulder_width_norm,
+                'elbow_angle_avg': elbow_angle_avg,
+                'hip_width_norm': hip_width_norm,
+                'knee_angle_avg': knee_angle_avg,
+                'spine_angle': spine_angle,
+                'com_x_norm': com_x_norm,
+                'com_y_norm': com_y_norm,
+                'elbow_flexion': elbow_flexion,
+                'body_alignment': body_alignment,
+                'hip_sag_ratio': hip_sag_ratio,
+                'elbow_flare': elbow_flare,
+                'hand_placement_width': hand_placement_width,
+                'head_position': head_position,
+                'is_bottom_position': is_bottom_position,
+                'is_top_position': is_top_position
             }
         
         except Exception as e:
             print(f"Feature extraction error: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def extract_squat_features(self, landmarks):
@@ -230,7 +256,8 @@ if __name__ == "__main__":
     
     cap = cv2.VideoCapture(0)
     
-    print("Feature Extractor Test")
+    print("Feature Extractor Test - FIXED VERSION")
+    print("Should now extract exactly 16 features")
     print("Press 'q' to quit")
     print("-" * 50)
     
@@ -249,13 +276,23 @@ if __name__ == "__main__":
             features = extractor.extract_pushup_features(landmarks)
             
             if features:
-                # Display features on frame
-                y_offset = 30
-                for key, value in features.items():
-                    text = f"{key}: {value:.2f}"
-                    cv2.putText(frame, text, (10, y_offset), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-                    y_offset += 20
+                # Verify feature count
+                feature_count = len(features)
+                cv2.putText(frame, f"Features extracted: {feature_count}/16", 
+                          (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, 
+                          (0, 255, 0) if feature_count == 16 else (0, 0, 255), 2)
+                
+                # Display some key features
+                y_offset = 60
+                key_features = ['elbow_angle_avg', 'spine_angle', 'elbow_flexion', 
+                               'is_bottom_position', 'is_top_position']
+                for key in key_features:
+                    if key in features:
+                        value = features[key]
+                        text = f"{key}: {value:.2f}"
+                        cv2.putText(frame, text, (10, y_offset), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                        y_offset += 25
         
         cv2.imshow('Feature Extraction Test', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):

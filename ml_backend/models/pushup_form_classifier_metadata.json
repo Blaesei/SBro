@@ -1,0 +1,24 @@
+{
+  "exercise": "pushup",
+  "training_date": "2026-01-10T09:02:36.218809",
+  "num_samples": 4935,
+  "num_features": 8,
+  "feature_names": [
+    "elbow_angle",
+    "back_angle",
+    "hip_height_ratio",
+    "torso_length",
+    "body_tilt",
+    "elbow_spread",
+    "lateral_alignment",
+    "knee_angle"
+  ],
+  "test_accuracy": 0.8378926038500507,
+  "cv_mean": 0.8366324942644912,
+  "cv_std": 0.014141168414194386,
+  "classes": [
+    "BACK_SAGGING",
+    "FORM_ERROR",
+    "GOOD_FORM"
+  ]
+}

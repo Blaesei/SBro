@@ -1,0 +1,153 @@
+{
+  "training_config": {
+    "n_estimators": 100,
+    "max_depth": 10,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "n_jobs": -1,
+    "test_size": 0.2,
+    "random_state": 42
+  },
+  "training_timestamp": "2026-01-19T23:59:51.864835",
+  "dataset_size": {
+    "train_samples": 872,
+    "test_samples": 243,
+    "train_videos": 22,
+    "test_videos": 6
+  },
+  "train_videos": [
+    "squat_back_02.mp4",
+    "squat_back_03.mp4",
+    "squat_back_04.mp4",
+    "squat_back_05.mp4",
+    "squat_back_06.mp4",
+    "squat_back_07.mp4",
+    "squat_back_08.mp4",
+    "squat_depth_02.mp4",
+    "squat_depth_03.mp4",
+    "squat_depth_05.mp4",
+    "squat_depth_06.mp4",
+    "squat_depth_07.mp4",
+    "squat_depth_08.mp4",
+    "squat_depth_09.mp4",
+    "squat_depth_10.mp4",
+    "squat_good_01.mp4",
+    "squat_good_02.mp4",
+    "squat_good_04.mp4",
+    "squat_good_05.mp4",
+    "squat_good_06.mp4",
+    "squat_good_08.mp4",
+    "squat_good_09.mp4"
+  ],
+  "test_videos": [
+    "squat_back_01.mp4",
+    "squat_back_09.mp4",
+    "squat_depth_01.mp4",
+    "squat_depth_04.mp4",
+    "squat_good_03.mp4",
+    "squat_good_07.mp4"
+  ],
+  "feature_columns": [
+    "torso_length",
+    "shoulder_width_norm",
+    "knee_angle_avg",
+    "hip_width_norm",
+    "spine_angle",
+    "com_x_norm",
+    "com_y_norm",
+    "knee_flexion",
+    "hip_depth_ratio",
+    "torso_lean",
+    "knee_valgus",
+    "weight_shift_lateral",
+    "heel_lift",
+    "is_bottom_position",
+    "is_top_position"
+  ],
+  "n_features": 15,
+  "label_classes": [
+    "GOOD_FORM",
+    "INCOMPLETE_DEPTH",
+    "ROUNDING_BACK"
+  ],
+  "n_classes": 3,
+  "metrics": {
+    "train_accuracy": 0.9931192660550459,
+    "test_accuracy": 0.9135802469135802,
+    "test_f1_macro": 0.9125953075320163
+  },
+  "classification_report": {
+    "GOOD_FORM": {
+      "precision": 0.8829787234042553,
+      "recall": 0.9120879120879121,
+      "f1-score": 0.8972972972972973,
+      "support": 91.0
+    },
+    "INCOMPLETE_DEPTH": {
+      "precision": 0.8840579710144928,
+      "recall": 0.8243243243243243,
+      "f1-score": 0.8531468531468531,
+      "support": 74.0
+    },
+    "ROUNDING_BACK": {
+      "precision": 0.975,
+      "recall": 1.0,
+      "f1-score": 0.9873417721518988,
+      "support": 78.0
+    },
+    "accuracy": 0.9135802469135802,
+    "macro avg": {
+      "precision": 0.914012231472916,
+      "recall": 0.9121374121374122,
+      "f1-score": 0.9125953075320163,
+      "support": 243.0
+    },
+    "weighted avg": {
+      "precision": 0.9128450768924269,
+      "recall": 0.9135802469135802,
+      "f1-score": 0.912755470842672,
+      "support": 243.0
+    }
+  },
+  "confusion_matrix": {
+    "matrix": [
+      [
+        83,
+        8,
+        0
+      ],
+      [
+        11,
+        61,
+        2
+      ],
+      [
+        0,
+        0,
+        78
+      ]
+    ],
+    "labels": [
+      "GOOD_FORM",
+      "INCOMPLETE_DEPTH",
+      "ROUNDING_BACK"
+    ]
+  },
+  "feature_importances": {
+    "torso_length": 0.1106079697299678,
+    "shoulder_width_norm": 0.010643205041614005,
+    "knee_angle_avg": 0.029720437324887737,
+    "hip_width_norm": 0.030308036737040273,
+    "spine_angle": 0.054251525025943874,
+    "com_x_norm": 0.14703125909144713,
+    "com_y_norm": 0.1554550618228251,
+    "knee_flexion": 0.03953117914856513,
+    "hip_depth_ratio": 0.04269278893143099,
+    "torso_lean": 0.18866130432447148,
+    "knee_valgus": 0.02587759591268641,
+    "weight_shift_lateral": 0.161967192623559,
+    "heel_lift": 0.0,
+    "is_bottom_position": 0.00038945718982718485,
+    "is_top_position": 0.0028629870957338475
+  }
+}

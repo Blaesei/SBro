@@ -1,0 +1,119 @@
+{
+  "training_config": {
+    "n_estimators": 100,
+    "max_depth": 10,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "n_jobs": -1,
+    "test_size": 0.2,
+    "random_state": 42
+  },
+  "training_timestamp": "2026-01-20T00:00:03.872800",
+  "dataset_size": {
+    "train_samples": 297,
+    "test_samples": 99,
+    "train_videos": 9,
+    "test_videos": 3
+  },
+  "train_videos": [
+    "plank_good_02.mp4",
+    "plank_good_03.mp4",
+    "plank_good_04.mp4",
+    "plank_pike_01.mp4",
+    "plank_pike_02.mp4",
+    "plank_pike_03.mp4",
+    "plank_pike_04.mp4",
+    "plank_sag_01.mp4",
+    "plank_sag_04.mp4"
+  ],
+  "test_videos": [
+    "plank_good_01.mp4",
+    "plank_sag_02.mp4",
+    "plank_sag_03.mp4"
+  ],
+  "feature_columns": [
+    "torso_length",
+    "shoulder_width_norm",
+    "spine_angle",
+    "com_x_norm",
+    "com_y_norm",
+    "body_alignment",
+    "hip_sag_ratio",
+    "elbow_shoulder_dist",
+    "is_valid_hold"
+  ],
+  "n_features": 9,
+  "label_classes": [
+    "GOOD_FORM",
+    "HIPS_HIGH",
+    "HIPS_SAGGING"
+  ],
+  "n_classes": 3,
+  "metrics": {
+    "train_accuracy": 0.9966329966329966,
+    "test_accuracy": 1.0,
+    "test_f1_macro": 1.0
+  },
+  "classification_report": {
+    "GOOD_FORM": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 24.0
+    },
+    "HIPS_SAGGING": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 75.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 99.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 99.0
+    }
+  },
+  "confusion_matrix": {
+    "matrix": [
+      [
+        24,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        75
+      ]
+    ],
+    "labels": [
+      "GOOD_FORM",
+      "HIPS_HIGH",
+      "HIPS_SAGGING"
+    ]
+  },
+  "feature_importances": {
+    "torso_length": 0.12548906808563015,
+    "shoulder_width_norm": 0.005133034825603607,
+    "spine_angle": 0.1735686352412272,
+    "com_x_norm": 0.1974998262386153,
+    "com_y_norm": 0.2090027846818478,
+    "body_alignment": 0.11101224655203559,
+    "hip_sag_ratio": 0.1722533261767244,
+    "elbow_shoulder_dist": 0.006041078198316009,
+    "is_valid_hold": 0.0
+  }
+}

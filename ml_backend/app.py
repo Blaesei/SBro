@@ -1,7 +1,8 @@
 """
-SpotBro ML Backend - Multi-Exercise Support
-COMPLETE VERSION with Push-up, Squat, and Plank
+SpotBro ML Backend - Flask API
+FIXED VERSION - Robust error handling & proper detection
 """
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import cv2
@@ -10,90 +11,70 @@ import base64
 import sys
 import os
 
+# Add ml modules to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'ml'))
 
+from ml.pose_detector import PoseDetector
+from ml.feature_extractor import FeatureExtractor
 from ml.inference import FormAnalyzer
-from ml.plank_analyzer import PlankAnalyzer
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enable CORS for frontend access
 
-# Global analyzers dictionary
-analyzers = {}
+# Global analyzer instances (loaded once at startup)
+pushup_analyzer = None
+squat_analyzer = None
 
 def initialize_analyzers():
-    """Load all exercise analyzers at startup"""
-    global analyzers
+    """Load ML models at startup"""
+    global pushup_analyzer, squat_analyzer
     
-    print("=" * 70)
-    print("INITIALIZING SPOTBRO ML BACKEND")
-    print("=" * 70)
-    
-    # Push-up analyzer
     try:
-        pushup_model = 'models/pushup_form_classifier.pkl'
-        if os.path.exists(pushup_model):
-            analyzers['pushup'] = FormAnalyzer(
-                model_path=pushup_model,
+        # Load push-up model
+        pushup_model_path = 'models/pushup_form_classifier.pkl'
+        if os.path.exists(pushup_model_path):
+            pushup_analyzer = FormAnalyzer(
+                model_path=pushup_model_path,
                 exercise='pushup'
             )
-            print("✓ Push-up analyzer loaded")
+            print(f"✅ Push-up model loaded: {pushup_model_path}")
         else:
-            print(f"✗ Push-up model not found: {pushup_model}")
-    except Exception as e:
-        print(f"✗ Push-up analyzer failed: {e}")
-    
-    # Squat analyzer
-    try:
-        squat_model = 'models/squat_form_classifier.pkl'
-        if os.path.exists(squat_model):
-            analyzers['squat'] = FormAnalyzer(
-                model_path=squat_model,
+            print(f"⚠️ Push-up model not found: {pushup_model_path}")
+        
+        # Load squat model
+        squat_model_path = 'models/squat_form_classifier.pkl'
+        if os.path.exists(squat_model_path):
+            squat_analyzer = FormAnalyzer(
+                model_path=squat_model_path,
                 exercise='squat'
             )
-            print("✓ Squat analyzer loaded")
+            print(f"✅ Squat model loaded: {squat_model_path}")
         else:
-            print(f"⚠ Squat model not found: {squat_model}")
-            print("  → Train squat model: python ml/src/train_model_squat.py")
+            print(f"⚠️ Squat model not found: {squat_model_path}")
+        
     except Exception as e:
-        print(f"✗ Squat analyzer failed: {e}")
-    
-    # Plank analyzer (no model needed - rule-based)
-    try:
-        analyzers['plank'] = PlankAnalyzer()
-        print("✓ Plank analyzer loaded")
-    except Exception as e:
-        print(f"✗ Plank analyzer failed: {e}")
-    
-    print("=" * 70)
-    print(f"Total exercises loaded: {len(analyzers)}")
-    print(f"Available: {', '.join(analyzers.keys())}")
-    print("=" * 70)
+        print(f"❌ Error loading models: {e}")
+        import traceback
+        traceback.print_exc()
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint - shows all available exercises"""
+    """Health check endpoint"""
     return jsonify({
         'status': 'ok',
-        'exercises_available': list(analyzers.keys()),
-        'pushup_loaded': 'pushup' in analyzers,
-        'squat_loaded': 'squat' in analyzers,
-        'plank_loaded': 'plank' in analyzers,
-        'total_exercises': len(analyzers)
+        'pushup_model_loaded': pushup_analyzer is not None,
+        'squat_model_loaded': squat_analyzer is not None,
+        'pushup_classes': list(pushup_analyzer.model_classes) if pushup_analyzer else [],
+        'squat_classes': list(squat_analyzer.model_classes) if squat_analyzer else []
     })
 
 @app.route('/api/analyze', methods=['POST'])
 def analyze_frame():
     """
-    Analyze frame for any exercise
-    
-    Request JSON:
-    {
-        "image": "base64_string",
-        "exercise": "pushup" | "squat" | "plank"
-    }
+    Analyze a video frame from frontend - FIXED VERSION
     """
     try:
+        # Parse request
         data = request.json
         
         if not data or 'image' not in data:
@@ -104,153 +85,216 @@ def analyze_frame():
         
         exercise = data.get('exercise', 'pushup').lower()
         
-        # Check if exercise analyzer exists
-        if exercise not in analyzers:
+        # Select appropriate analyzer
+        if exercise == 'pushup':
+            analyzer = pushup_analyzer
+        elif exercise == 'squat':
+            analyzer = squat_analyzer
+        else:
             return jsonify({
                 'success': False,
-                'error': f'Exercise "{exercise}" not available',
-                'available_exercises': list(analyzers.keys())
-            }), 404
+                'error': f'Unknown exercise: {exercise}'
+            }), 400
         
-        # Decode base64 image
+        if analyzer is None:
+            return jsonify({
+                'success': False,
+                'error': f'No model loaded for {exercise}. Check backend logs.',
+                'rep_count': 0,
+                'feedback': f'⚠️ Model not loaded for {exercise}',
+                'issues': [f'Model file missing for {exercise}'],
+                'suggestions': ['Check if model file exists in models/ folder'],
+                'confidence': 0,
+                'rep_phase': 'UP',
+                'form_score': 0,
+                'position_valid': False,
+                'position_msg': 'Model not available'
+            }), 503
+        
+        # Decode base64 image - IMPROVED ERROR HANDLING
         try:
+            # Remove data URL prefix if present
             image_data = data['image']
             if ',' in image_data:
                 image_data = image_data.split(',')[1]
             
+            # Decode base64
             image_bytes = base64.b64decode(image_data)
             nparr = np.frombuffer(image_bytes, np.uint8)
             frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             
             if frame is None:
                 raise ValueError("Failed to decode image")
+            
+            # Validate frame dimensions
+            if frame.shape[0] < 100 or frame.shape[1] < 100:
+                raise ValueError("Image too small")
                 
         except Exception as e:
+            print(f"Image decode error: {e}")
             return jsonify({
                 'success': False,
-                'error': f'Image decode error: {str(e)}'
+                'error': f'Image decode error: {str(e)}',
+                'rep_count': 0,
+                'feedback': '⚠️ Invalid image format',
+                'issues': ['Could not process image'],
+                'suggestions': ['Check camera permissions'],
+                'confidence': 0,
+                'rep_phase': 'UP',
+                'form_score': 0,
+                'position_valid': False,
+                'position_msg': 'Image processing failed'
             }), 400
         
-        # Get appropriate analyzer
-        analyzer = analyzers[exercise]
-        
-        # Analyze frame
-        result = analyzer.analyze_frame(frame)
-        
-        # Format response based on exercise type
-        if exercise == 'plank':
-            # Plank returns hold time instead of rep count
-            return jsonify({
+        # Analyze frame - WITH DETAILED ERROR HANDLING
+        try:
+            result = analyzer.analyze_frame(frame)
+            
+            # Ensure all required fields exist
+            if not result:
+                result = create_default_result()
+            
+            # Validate result structure
+            required_fields = ['rep_count', 'feedback', 'confidence', 'rep_phase', 'position_valid', 'position_msg']
+            for field in required_fields:
+                if field not in result:
+                    result[field] = get_default_value(field)
+            
+            # Calculate form score (0-100)
+            if result.get('confidence', 0) > 0:
+                issues = result.get('detailed_issues', [])
+                perfect_form = len(issues) == 1 and "Perfect" in str(issues)
+                
+                if perfect_form:
+                    form_score = min(95 + result['confidence'] * 5, 100)
+                elif len(issues) <= 1:
+                    form_score = 85 + result['confidence'] * 10
+                elif len(issues) <= 2:
+                    form_score = 75 + result['confidence'] * 10
+                else:
+                    form_score = 60 + result['confidence'] * 10
+            else:
+                form_score = 0
+            
+            # Return response with ALL required fields
+            response = {
                 'success': True,
-                'exercise': exercise,
-                'is_holding': result.get('is_holding', False),
-                'current_hold_time': result.get('current_hold_time', 0),
-                'total_hold_time': result.get('total_hold_time', 0),
-                'feedback': result.get('position_msg', 'Analyzing...'),
-                'issues': result.get('issues', []),
-                'suggestions': result.get('suggestions', []),
-                'form_score': result.get('form_score', 0),
-                'position_valid': result.get('position_valid', False),
-                'position_msg': result.get('position_msg', '')
-            })
-        else:
-            # Push-up and Squat return rep count
-            return jsonify({
-                'success': True,
-                'exercise': exercise,
-                'rep_count': result.get('rep_count', 0),
-                'feedback': result.get('feedback', 'Analyzing...'),
-                'issues': result.get('detailed_issues', []),
-                'suggestions': result.get('suggestions', []),
+                'rep_count': int(result.get('rep_count', 0)),
+                'feedback': str(result.get('feedback', 'Analyzing...')),
+                'issues': list(result.get('detailed_issues', [])),
+                'suggestions': list(result.get('suggestions', [])),
                 'confidence': float(result.get('confidence', 0)),
-                'rep_phase': result.get('rep_phase', 'UP'),
-                'form_score': result.get('form_score', 0) if 'form_score' in result else calculate_form_score(result),
-                'elbow_angle': result.get('elbow_angle', 0) if exercise == 'pushup' else result.get('knee_angle', 0),
-                'position_valid': result.get('position_valid', False),
-                'position_msg': result.get('position_msg', ''),
-                'rejected_reps': result.get('rejected_reps', 0),
-                'total_attempts': result.get('total_attempts', 0)
-            })
+                'rep_phase': str(result.get('rep_phase', 'UP')),
+                'form_score': round(form_score, 1),
+                'elbow_angle': round(result.get('elbow_angle', 0), 1),
+                'position_valid': bool(result.get('position_valid', False)),
+                'position_msg': str(result.get('position_msg', ''))
+            }
+            
+            return jsonify(response)
+            
+        except Exception as e:
+            print(f"Analysis error: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            return jsonify({
+                'success': False,
+                'error': f'Analysis failed: {str(e)}',
+                'rep_count': 0,
+                'feedback': '⚠️ Analysis error',
+                'issues': ['Processing failed'],
+                'suggestions': ['Ensure full body is visible'],
+                'confidence': 0,
+                'rep_phase': 'UP',
+                'form_score': 0,
+                'position_valid': False,
+                'position_msg': 'Analysis error'
+            }), 500
     
     except Exception as e:
-        print(f"❌ Error in analyze_frame: {e}")
+        print(f"Error in analyze_frame: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
-            'error': f'Analysis error: {str(e)}'
+            'error': f'Server error: {str(e)}',
+            'rep_count': 0,
+            'feedback': '⚠️ Server error',
+            'issues': ['Unexpected error'],
+            'suggestions': ['Try again'],
+            'confidence': 0,
+            'rep_phase': 'UP',
+            'form_score': 0,
+            'position_valid': False,
+            'position_msg': 'Server error'
         }), 500
 
-def calculate_form_score(result):
-    """Calculate form score from result data"""
-    confidence = result.get('confidence', 0)
-    issues = result.get('detailed_issues', [])
-    
-    # Base score on confidence
-    form_score = confidence * 100
-    
-    # Adjust based on issues
-    if issues:
-        perfect_form = len(issues) == 1 and "Perfect form" in str(issues)
-        if perfect_form:
-            form_score = min(95 + confidence * 5, 100)
-        elif len(issues) <= 1:
-            form_score = 85 + confidence * 10
-        elif len(issues) <= 2:
-            form_score = 75 + confidence * 10
-        else:
-            form_score = 60 + confidence * 10
-    
-    return round(form_score, 1)
+def create_default_result():
+    """Create a safe default result"""
+    return {
+        'rep_count': 0,
+        'feedback': 'Initializing...',
+        'detailed_issues': ['Starting analysis...'],
+        'suggestions': ['Position yourself in frame'],
+        'confidence': 0,
+        'rep_phase': 'UP',
+        'position_valid': False,
+        'position_msg': 'Initializing',
+        'elbow_angle': 0
+    }
+
+def get_default_value(field):
+    """Get default value for a field"""
+    defaults = {
+        'rep_count': 0,
+        'feedback': 'Analyzing...',
+        'confidence': 0,
+        'rep_phase': 'UP',
+        'position_valid': False,
+        'position_msg': 'Checking position...',
+        'form_score': 0,
+        'elbow_angle': 0
+    }
+    return defaults.get(field, None)
 
 @app.route('/api/reset', methods=['POST'])
 def reset_counter():
-    """
-    Reset exercise counter/timer
-    
-    Request JSON:
-    {
-        "exercise": "pushup" | "squat" | "plank"
-    }
-    """
+    """Reset rep counter for an exercise"""
     try:
         data = request.json
         exercise = data.get('exercise', 'pushup').lower()
         
-        if exercise not in analyzers:
+        if exercise == 'pushup':
+            analyzer = pushup_analyzer
+        elif exercise == 'squat':
+            analyzer = squat_analyzer
+        else:
             return jsonify({
                 'success': False,
-                'error': f'Exercise "{exercise}" not available'
-            }), 404
+                'error': f'Unknown exercise: {exercise}'
+            }), 400
         
-        analyzer = analyzers[exercise]
-        
-        # Reset based on exercise type
-        if exercise == 'plank':
-            analyzer.is_holding = False
-            analyzer.hold_start_time = 0
-            analyzer.total_hold_time = 0
-            analyzer.current_hold_time = 0
-            analyzer.form_scores_over_time = []
-            
-            return jsonify({
-                'success': True,
-                'message': f'{exercise.capitalize()} timer reset',
-                'hold_time': 0
-            })
-        else:
+        if analyzer:
             analyzer.rep_count = 0
             analyzer.last_rep_feedback = []
             analyzer.in_down_position = False
             analyzer.rep_phase = "UP"
-            analyzer.rejected_reps = 0
-            analyzer.total_rep_attempts = 0
+            analyzer.prev_elbow_angle = 180
             
             return jsonify({
                 'success': True,
                 'message': f'{exercise.capitalize()} counter reset',
                 'rep_count': 0
             })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Analyzer not initialized'
+            }), 503
     
     except Exception as e:
+        print(f"Error in reset: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -258,40 +302,33 @@ def reset_counter():
 
 @app.route('/api/get_stats', methods=['GET'])
 def get_current_stats():
-    """
-    Get current workout stats without analyzing frame
-    
-    Query params:
-    ?exercise=pushup|squat|plank
-    """
+    """Get current workout stats without analyzing a frame"""
     try:
         exercise = request.args.get('exercise', 'pushup').lower()
         
-        if exercise not in analyzers:
-            return jsonify({
-                'success': False,
-                'error': f'Exercise "{exercise}" not available'
-            }), 404
-        
-        analyzer = analyzers[exercise]
-        
-        if exercise == 'plank':
-            return jsonify({
-                'success': True,
-                'exercise': exercise,
-                'is_holding': analyzer.is_holding,
-                'current_hold_time': analyzer.current_hold_time,
-                'total_hold_time': analyzer.total_hold_time
-            })
+        if exercise == 'pushup':
+            analyzer = pushup_analyzer
+        elif exercise == 'squat':
+            analyzer = squat_analyzer
         else:
             return jsonify({
-                'success': True,
-                'exercise': exercise,
-                'rep_count': analyzer.rep_count,
-                'rep_phase': analyzer.rep_phase,
-                'rejected_reps': analyzer.rejected_reps,
-                'total_attempts': analyzer.total_rep_attempts
-            })
+                'success': False,
+                'error': f'Unknown exercise: {exercise}'
+            }), 400
+        
+        if not analyzer:
+            return jsonify({
+                'success': False,
+                'error': 'Analyzer not initialized'
+            }), 503
+        
+        return jsonify({
+            'success': True,
+            'exercise': exercise,
+            'rep_count': analyzer.rep_count,
+            'rep_phase': analyzer.rep_phase,
+            'last_feedback': analyzer.last_rep_feedback
+        })
     
     except Exception as e:
         return jsonify({
@@ -299,45 +336,22 @@ def get_current_stats():
             'error': str(e)
         }), 500
 
-@app.route('/api/exercises', methods=['GET'])
-def list_exercises():
-    """List all available exercises with their status"""
-    exercises_info = []
-    
-    for exercise_name in ['pushup', 'squat', 'plank']:
-        exercises_info.append({
-            'name': exercise_name,
-            'display_name': exercise_name.capitalize(),
-            'available': exercise_name in analyzers,
-            'type': 'hold' if exercise_name == 'plank' else 'reps',
-            'icon': '💪' if exercise_name == 'pushup' else '🦵' if exercise_name == 'squat' else '🧘'
-        })
-    
-    return jsonify({
-        'success': True,
-        'exercises': exercises_info,
-        'total_available': len(analyzers)
-    })
-
 if __name__ == '__main__':
-    print("\n" + "=" * 70)
-    print("SPOTBRO ML BACKEND - MULTI-EXERCISE SUPPORT")
-    print("=" * 70 + "\n")
+    print("=" * 60)
+    print("SpotBro ML Backend - Starting")
+    print("=" * 60)
     
-    # Initialize all analyzers
+    # Initialize models
     initialize_analyzers()
     
-    print("\n" + "=" * 70)
-    print("API ENDPOINTS:")
-    print("=" * 70)
+    print("\nAPI Endpoints:")
     print("  GET  /api/health          - Health check")
     print("  POST /api/analyze         - Analyze frame")
-    print("  POST /api/reset           - Reset counter/timer")
+    print("  POST /api/reset           - Reset counter")
     print("  GET  /api/get_stats       - Get current stats")
-    print("  GET  /api/exercises       - List all exercises")
-    print("=" * 70)
+    print("=" * 60)
     print("\nStarting Flask server on http://localhost:5000")
     print("Press Ctrl+C to stop")
-    print("=" * 70 + "\n")
+    print("=" * 60 + "\n")
     
     app.run(host='0.0.0.0', port=5000, debug=True)
