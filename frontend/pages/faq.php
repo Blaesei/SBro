@@ -4,22 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FAQ - SpotBro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../assets/css/base.css">
     <link rel="stylesheet" href="../assets/css/layout.css">
     <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dark_mode.css">
+
 </head>
 <body>
-    <nav class="navbar">
-        <div class="navbar-container">
-            <div class="navbar-brand">
-                <img src="../assets/images/logo.png" alt="SpotBro" class="navbar-logo">
-            </div>
-            <div style="display: flex; gap: 1rem;">
-                <a href="index.php" class="btn btn-primary">Home</a>
-                <a href="login.php" class="btn btn-primary">Sign In</a>
-            </div>
-        </div>
-    </nav>
+    <!-- HEADER -->
+    <?php include '../includes/header.php'; ?>
 
     <main class="main-content">
         <div class="container" style="max-width: 800px;">
@@ -67,6 +62,20 @@
         </div>
     </main>
 
+    <!-- FOOTER -->
     <?php include '../includes/footer.php'; ?>
+
+    <!-- SCRIPTS -->
+    <script>
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            sessionStorage.clear();
+            window.location.href = 'login.php';
+        });
+    </script>
+
+    <!-- theme toggle script -->
+    <script src="../assets/js/theme-toggle.js"></script>
 </body>
 </html>

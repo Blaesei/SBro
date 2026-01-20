@@ -1,0 +1,365 @@
+/**
+ * SpotBro Dark Mode Styles
+ * Place this file in: frontend/assets/css/dark-mode.css
+ * 
+ * Include after your main CSS files:
+ * <link rel="stylesheet" href="../assets/css/dark-mode.css">
+ */
+
+/* ==========================================
+   DARK MODE ROOT VARIABLES
+   ========================================== */
+.dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --border-color: #334155;
+    --hover-bg: #1e293b;
+}
+
+/* ==========================================
+   BODY & MAIN BACKGROUNDS
+   ========================================== */
+.dark body {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+}
+
+.dark .bg-white {
+    background-color: var(--bg-secondary) !important;
+}
+
+.dark .bg-gray-50 {
+    background-color: var(--bg-primary) !important;
+}
+
+.dark .bg-gray-100 {
+    background-color: var(--bg-secondary) !important;
+}
+
+.dark .bg-gray-900 {
+    background-color: #000000 !important;
+}
+
+/* ==========================================
+   TEXT COLORS
+   ========================================== */
+.dark .text-gray-900 {
+    color: var(--text-primary) !important;
+}
+
+.dark .text-gray-800 {
+    color: var(--text-primary) !important;
+}
+
+.dark .text-gray-700 {
+    color: var(--text-secondary) !important;
+}
+
+.dark .text-gray-600 {
+    color: var(--text-secondary) !important;
+}
+
+.dark .text-gray-500 {
+    color: var(--text-tertiary) !important;
+}
+
+.dark .text-gray-400 {
+    color: var(--text-tertiary) !important;
+}
+
+/* ==========================================
+   BORDERS
+   ========================================== */
+.dark .border-gray-200 {
+    border-color: var(--border-color) !important;
+}
+
+.dark .border-gray-300 {
+    border-color: var(--border-color) !important;
+}
+
+/* ==========================================
+   CARDS
+   ========================================== */
+.dark .card {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color);
+}
+
+.dark .card:hover {
+    background-color: var(--bg-tertiary) !important;
+}
+
+/* ==========================================
+   STAT CARDS (Keep gradient but darken)
+   ========================================== */
+.dark .stat-card {
+    background: linear-gradient(135deg, #1e3a8a, #581c87) !important;
+    color: var(--text-primary) !important;
+}
+
+/* ==========================================
+   NAVIGATION
+   ========================================== */
+.dark nav {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.dark .nav-item {
+    color: var(--text-secondary) !important;
+}
+
+.dark .nav-item:hover {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+.dark .nav-item.active {
+    background-color: #1e40af !important;
+    color: #dbeafe !important;
+}
+
+/* ==========================================
+   WORKOUT ITEMS
+   ========================================== */
+.dark .workout-item {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+.dark .workout-item:hover {
+    background-color: #475569 !important;
+}
+
+/* ==========================================
+   FORMS & INPUTS
+   ========================================== */
+.dark input,
+.dark textarea,
+.dark select {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+    background-color: var(--bg-secondary) !important;
+    border-color: #3b82f6 !important;
+}
+
+.dark input::placeholder {
+    color: var(--text-tertiary) !important;
+}
+
+/* ==========================================
+   BUTTONS (Keep vibrant colors but adjust)
+   ========================================== */
+.dark .btn-primary {
+    /* Keep gradient */
+}
+
+.dark .btn-secondary {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+.dark .btn-secondary:hover {
+    background-color: #475569 !important;
+}
+
+/* ==========================================
+   CHARTS
+   ========================================== */
+.dark .chart-bar {
+    /* Keep vibrant gradient colors for charts */
+}
+
+.dark #formScoreChart,
+.dark #workoutFrequencyChart {
+    color: var(--text-secondary);
+}
+
+/* ==========================================
+   FEATURE CARDS
+   ========================================== */
+.dark .feature-card {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+.dark .feature-card:hover {
+    background-color: var(--bg-secondary) !important;
+}
+
+.dark .feature-description {
+    color: var(--text-secondary) !important;
+}
+
+/* ==========================================
+   EXERCISE CARDS
+   ========================================== */
+.dark .bg-blue-50 {
+    background-color: #1e3a8a !important;
+}
+
+.dark .bg-purple-50 {
+    background-color: #581c87 !important;
+}
+
+.dark .bg-green-50 {
+    background-color: #14532d !important;
+}
+
+.dark .bg-yellow-50 {
+    background-color: #713f12 !important;
+}
+
+.dark .bg-blue-100 {
+    background-color: #1e40af !important;
+}
+
+.dark .bg-purple-100 {
+    background-color: #6b21a8 !important;
+}
+
+.dark .bg-green-100 {
+    background-color: #166534 !important;
+}
+
+/* ==========================================
+   ALERTS
+   ========================================== */
+.dark .alert-success {
+    background-color: #14532d !important;
+    border-color: #166534 !important;
+    color: #86efac !important;
+}
+
+.dark .alert-error {
+    background-color: #7f1d1d !important;
+    border-color: #991b1b !important;
+    color: #fca5a5 !important;
+}
+
+/* ==========================================
+   FOOTER
+   ========================================== */
+.dark footer {
+    background-color: #000000 !important;
+}
+
+/* ==========================================
+   CAMERA FEED & WORKOUT PAGE
+   ========================================== */
+.dark #workoutPage {
+    background-color: #000000 !important;
+}
+
+.dark .position-indicator {
+    background: rgba(15, 23, 42, 0.95) !important;
+}
+
+.dark .position-valid {
+    background: rgba(20, 83, 45, 0.95) !important;
+}
+
+.dark .position-invalid {
+    background: rgba(127, 29, 29, 0.95) !important;
+}
+
+/* ==========================================
+   LOADING SPINNER
+   ========================================== */
+.dark .spinner {
+    border-color: var(--border-color);
+    border-top-color: #667eea;
+}
+
+/* ==========================================
+   SCROLLBAR (Dark Mode)
+   ========================================== */
+.dark ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* ==========================================
+   SMOOTH TRANSITIONS
+   ========================================== */
+body,
+.card,
+.nav-item,
+.workout-item,
+.btn,
+input,
+textarea,
+select {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ==========================================
+   THEME TOGGLE BUTTON ENHANCEMENT
+   ========================================== */
+#themeToggle {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+#themeToggle:hover {
+    transform: scale(1.1);
+}
+
+#themeToggle .icon {
+    transition: all 0.3s ease;
+}
+
+/* Smooth icon transitions */
+.dark #sunIcon,
+.dark #moonIcon,
+#sunIcon,
+#moonIcon {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* ==========================================
+   PREVENT FLASH OF UNSTYLED CONTENT
+   ========================================== */
+body.dark {
+    /* Ensure immediate application */
+}
+
+/* ==========================================
+   ACCESSIBILITY - HIGH CONTRAST MODE
+   ========================================== */
+@media (prefers-contrast: high) {
+    .dark {
+        --bg-primary: #000000;
+        --bg-secondary: #1a1a1a;
+        --text-primary: #ffffff;
+        --text-secondary: #e0e0e0;
+    }
+}
+
+/* ==========================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================== */
+@media (max-width: 768px) {
+    .dark .nav-item {
+        /* Adjust for mobile if needed */
+    }
+}

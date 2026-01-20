@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SpotBro - Exercises</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/layout.css">
+    <link rel="stylesheet" href="../assets/css/components.css">
     <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dark_mode.css">
     <style>
+        
         #workoutVideo {
             width: 100%;
             height: 100%;
@@ -66,47 +71,8 @@
 </head>
 <body class="bg-gray-50">
 
-    <!-- Navigation -->
-    <nav class="bg-white border-b border-gray-200 px-6 py-4">
-        <div class="flex items-center justify-between max-w-7xl mx-auto">
-            <div class="flex items-center space-x-2">
-                <img src="../assets/images/logo.png" alt="SpotBro Logo" class="h-12" onerror="this.style.display='none'">
-            </div>
-            <div class="flex items-center space-x-6">
-                <a href="home.php" class="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg">
-                    <svg class="icon" viewBox="0 0 24 24">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                    </svg>
-                    <span class="font-medium">Home</span>
-                </a>
-                <a href="exercises.php" class="nav-item active flex items-center space-x-2 px-4 py-2 rounded-lg">
-                    <svg class="icon" viewBox="0 0 24 24">
-                        <path d="m6.5 6.5 11 11"></path>
-                        <path d="m21 21-1-1"></path>
-                        <path d="m3 21 9-9"></path>
-                        <circle cx="10.5" cy="10.5" r="7.5"></circle>
-                    </svg>
-                    <span class="font-medium">Exercises</span>
-                </a>
-                <a href="progress.php" class="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg">
-                    <svg class="icon" viewBox="0 0 24 24">
-                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                        <polyline points="16 7 22 7 22 13"></polyline>
-                    </svg>
-                    <span class="font-medium">Progress</span>
-                </a>
-                <a href="#" class="nav-item flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50" id="logoutBtn">
-                    <svg class="icon" viewBox="0 0 24 24">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" x2="9" y1="12" y2="12"></line>
-                    </svg>
-                    <span class="font-medium">Logout</span>
-                </a>
-            </div>
-        </div>
-    </nav>
+    <!-- HEADER -->
+    <?php include '../includes/header.php'; ?>
 
     <!-- Exercise Library Page -->
     <div id="libraryPage" class="min-h-screen bg-gray-50">
@@ -239,17 +205,10 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-white mt-16">
-        <div class="max-w-7xl mx-auto px-6 py-8">
-            <div class="text-center">
-                <p class="text-gray-400 mb-2">© 2025 SpotBro. All rights reserved.</p>
-                <p class="text-gray-500 text-sm">Built with ❤️ using AI and Machine Learning</p>
-                <p class="text-gray-600 text-xs mt-2">Created by Your Team | Powered by MediaPipe & TensorFlow</p>
-            </div>
-        </div>
-    </footer>
+    <!-- FOOTER -->
+    <?php include '../includes/footer.php'; ?>
 
+    <!-- SCRIPTS -->
     <script>
         // Check authentication
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -328,7 +287,7 @@
                     <h3 class="text-xl font-bold text-gray-900 mb-2">${ex.name}</h3>
                     <p class="text-sm text-gray-600 mb-4">${ex.description}</p>
                     <div class="flex items-center justify-between">
-                        <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full">${ex.difficulty}</span>
+                        <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full difficulty-badge">${ex.difficulty}</span>
                         ${ex.hasML ? '<span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">🤖 AI Ready</span>' : ''}
                     </div>
                 </div>
@@ -622,5 +581,8 @@
         renderExercises();
         showPage('library');
     </script>
+
+    <!-- theme toggle script -->
+    <script src="../assets/js/theme-toggle.js"></script>
 </body>
 </html>
