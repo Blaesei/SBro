@@ -9,6 +9,20 @@
 /* ==========================================
    DARK MODE ROOT VARIABLES
    ========================================== */
+
+/* Prevent transition flash on page load */
+    html.dark,
+    html.dark body,
+    body.dark {
+    transition: none !important;
+}
+
+/* Re-enable after load */
+    html.dark.loaded *,
+    body.dark.loaded * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}  
+
 .dark {
     --bg-primary: #0f172a;
     --bg-secondary: #1e293b;

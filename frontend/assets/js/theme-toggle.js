@@ -6,6 +6,7 @@
  * <script src="../assets/js/theme-toggle.js"></script>
  */
 
+
 (function() {
     'use strict';
     
@@ -27,8 +28,10 @@
      */
     function applyTheme(theme) {
         if (theme === DARK_THEME) {
+            document.documentElement.classList.add(DARK_CLASS);
             document.body.classList.add(DARK_CLASS);
         } else {
+            document.documentElement.classList.remove(DARK_CLASS);
             document.body.classList.remove(DARK_CLASS);
         }
 
@@ -146,5 +149,14 @@
         toggle: toggleTheme,
         set: applyTheme,
         get: getCurrentTheme
+    };
+
+    // Runs immediately when script loads (not waiting for DOMContentLoaded)
+    const savedTheme = getCurrentTheme();
+    if (savedTheme === DARK_THEME) {
+        document.documentElement.classList.add(DARK_CLASS);
+    if (document.body) {
+        document.body.classList.add(DARK_CLASS);
+    }
     };
 })();
