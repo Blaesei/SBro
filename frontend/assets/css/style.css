@@ -1807,7 +1807,8 @@ h3 {
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 40px;
-    width: 100%;
+    width: 200%;
+    height: 500%;
     max-width: 440px;
     box-shadow: var(--shadow-xl);
     border: 2px solid rgba(211, 47, 47, 0.2);
