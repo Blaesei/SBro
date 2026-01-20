@@ -377,3 +377,16 @@ body.dark {
         /* Adjust for mobile if needed */
     }
 }
+/* Dark mode overrides for progress page */
+.dark-mode #formScoreChart .chart-bar {
+    background: linear-gradient(to top, #60a5fa, #a78bfa);
+}
+
+.dark-mode #workoutFrequencyChart .chart-bar {
+    background: linear-gradient(to top, #34d399, #6ee7b7);
+}
+
+.dark-mode .stat-card {
+    background-color: #1f2937;
+    border-color: #374151;
+}

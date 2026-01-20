@@ -10,10 +10,10 @@
   <div class="login-container">
     <div class="login-card">
       <div class="logo-image login-logo">
-        <img src="../assets/images/logo.png" alt="SpotBro Logo">
+        <img src="../assets/images/logo_light.png" alt="SpotBro Logo" style="max-width: 250px; height: auto; display: block; margin: 0 auto 1.5rem;">
       </div>
       <h2 class="login-title">Welcome to SpotBro</h2>
-      <p style="color: #dddddd; font-size: 1rem; margin-bottom: 2rem;">Your AI-powered fitness form coach</p>
+      <p style="color: #dddddd; font-size: 1rem; margin-bottom: 2rem; text-align: center;">Your AI-powered fitness form coach</p>
 
       <div style="text-align: center;">
         <a href="login.php" class="btn login-btn" style="margin-bottom: 1rem; display: inline-block; text-decoration: none;">Start Training</a>

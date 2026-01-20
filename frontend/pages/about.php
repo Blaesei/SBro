@@ -14,15 +14,14 @@ $current_page = 'about';
     <link rel="stylesheet" href="../assets/css/components.css">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dark_mode.css">
-
 </head>
-<body>
-    <!-- Navigation - CONSISTENT HEADER -->
+<body class="about-page">
+    <!-- Navigation -->
     <?php include '../includes/header.php'; ?>
 
     <main class="main-content">
-        <div class="container" style="max-width: 800px;">
-            <div class="page-header text-center">
+        <div class="container">
+            <div class="page-header">
                 <h1 class="page-title">About SpotBro</h1>
                 <p class="page-subtitle">Your AI-Powered Personal Trainer</p>
             </div>
@@ -37,7 +36,7 @@ $current_page = 'about';
 
             <div class="card">
                 <h2>How It Works</h2>
-                <ol style="color: var(--gray-600); line-height: 1.8;">
+                <ol>
                     <li><strong>Pose Detection:</strong> AI detects 33 key points on your body in real-time</li>
                     <li><strong>Form Analysis:</strong> ML models analyze biomechanical angles</li>
                     <li><strong>Instant Feedback:</strong> Receive immediate corrections</li>
@@ -45,18 +44,18 @@ $current_page = 'about';
                 </ol>
             </div>
 
-            <div class="text-center" style="margin-top: 2rem;">
-                <a href="signup.php" class="btn btn-primary btn-lg">
+            <div class="text-center">
+                <a href="signup.php" class="btn-primary">
                     Create Your Free Account
                 </a>
             </div>
         </div>
     </main>
 
-    <!-- FOOTER -->
+    <!-- Footer -->
     <?php include '../includes/footer.php'; ?>
 
-    <!-- SCRIPTS -->
+    <!-- Scripts -->
     <script>
         // Logout handler
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
@@ -66,7 +65,7 @@ $current_page = 'about';
         });
     </script>
 
-    <!-- theme toggle script -->
+    <!-- Theme toggle script -->
     <script src="../assets/js/theme-toggle.js"></script>
 </body>
 </html>

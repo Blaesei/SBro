@@ -12,9 +12,9 @@
         <div class="login-card">
             <!-- Logo -->
             <div class="logo-image">
-                <img src="../assets/images/logo.png" alt="SpotBro Logo" onerror="this.style.display='none'">
-            </div>
-            
+                <img src="../assets/images/logo_light.png" alt="SpotBro Logo" onerror="this.style.display='none'" 
+                    style="max-width: 250px; height: auto; display: block; margin: 0 auto 1.5rem;">
+            </div>            
             <!-- Title -->
             <h2 class="login-title">Welcome Back</h2>
             

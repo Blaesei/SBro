@@ -17,110 +17,8 @@ $current_page = 'home';
     <link rel="stylesheet" href="../assets/css/components.css">
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dark_mode.css">
-
-    <style>
-        /* Additional inline styles */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f9fafb;
-            line-height: 1.6;
-        }
-        .stat-card {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-        }
-        .stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-        .stat-label {
-            font-size: 0.875rem;
-            opacity: 0.9;
-        }
-        .card {
-            background: white;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 1.5rem;
-        }
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #111827;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        .btn-lg {
-            padding: 1rem 2rem;
-            font-size: 1.125rem;
-        }
-        .workout-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            background: #f9fafb;
-            border-radius: 0.75rem;
-            margin-bottom: 0.5rem;
-            transition: all 0.2s;
-        }
-        .workout-item:hover {
-            background: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transform: translateY(-2px);
-        }
-        .workout-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            border-radius: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-        .spinner {
-            border: 3px solid #e5e7eb;
-            border-top-color: #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 0.8s linear infinite;
-            margin: 2rem auto;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
 </head>
-<body class="bg-gray-50">
+<body class="dashboard-page">
 
     <!-- Include Navigation Header -->
     <?php include '../includes/header.php'; ?>
@@ -129,35 +27,33 @@ $current_page = 'home';
     <main class="max-w-7xl mx-auto p-6">
         <!-- Welcome Section -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome back, <span id="userName">User</span>! 👋</h1>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome back, <span id="userName">User</span>!</h1>
             <p class="text-gray-600">Ready to improve your form today?</p>
         </div>
         
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="stat-card" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-                <div class="stat-value" id="totalWorkouts">0</div>
-                <div class="stat-label">Workouts This Week</div>
+            <div class="dashboard-stat-card">
+                <div class="dashboard-stat-value" id="totalWorkouts">0</div>
+                <div class="dashboard-stat-label">Workouts This Week</div>
             </div>
             
-            <div class="stat-card" style="background: linear-gradient(135deg, #a855f7, #9333ea);">
-                <div class="stat-value" id="avgFormScore">0%</div>
-                <div class="stat-label">Average Form Score</div>
+            <div class="dashboard-stat-card">
+                <div class="dashboard-stat-value" id="avgFormScore">0%</div>
+                <div class="dashboard-stat-label">Average Form Score</div>
             </div>
             
-            <div class="stat-card" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
-                <div class="stat-value" id="currentStreak">0</div>
-                <div class="stat-label">Day Streak</div>
+            <div class="dashboard-stat-card">
+                <div class="dashboard-stat-value" id="currentStreak">0</div>
+                <div class="dashboard-stat-label">Day Streak</div>
             </div>
         </div>
         
         <!-- Quick Start -->
-        <div class="card">
-            <h2 class="card-title">Quick Start</h2>
-            <p style="color: #6b7280; margin-bottom: 1.5rem;">
-                Choose an exercise and start training with real-time AI feedback
-            </p>
-            <a href="exercises.php" class="btn btn-lg">
+        <div class="dashboard-card">
+            <h2 class="dashboard-card-title">Quick Start</h2>
+            <p class="text-gray-600 mb-6">Choose an exercise and start training with real-time AI feedback</p>
+            <a href="exercises.php" class="dashboard-btn dashboard-btn-lg">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10"></circle>
                     <polygon points="10 8 16 12 10 16 10 8"></polygon>
@@ -167,18 +63,18 @@ $current_page = 'home';
         </div>
         
         <!-- Recent Workouts -->
-        <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2 class="card-title" style="margin-bottom: 0;">Recent Workouts</h2>
-                <a href="progress.php" style="color: #667eea; font-weight: 600; font-size: 0.875rem; text-decoration: none;">
+        <div class="dashboard-card">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="dashboard-card-title mb-0">Recent Workouts</h2>
+                <a href="progress.php" class="dashboard-view-all">
                     View All →
                 </a>
             </div>
             
             <div id="recentWorkouts">
                 <!-- Loading state -->
-                <div style="text-align: center; padding: 2rem; color: #6b7280;">
-                    <div class="spinner"></div>
+                <div class="text-center py-8 text-gray-600">
+                    <div class="dashboard-spinner"></div>
                     <p>Loading workouts...</p>
                 </div>
             </div>
@@ -280,12 +176,12 @@ $current_page = 'home';
                 } else {
                     console.error('Failed to load data:', data.error);
                     document.getElementById('recentWorkouts').innerHTML = 
-                        '<p style="text-align: center; color: #6b7280; padding: 2rem;">Failed to load workouts</p>';
+                        '<p class="text-center text-gray-600 py-8">Failed to load workouts</p>';
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
                 document.getElementById('recentWorkouts').innerHTML = 
-                    '<p style="text-align: center; color: #6b7280; padding: 2rem;">Error loading data: ' + error.message + '</p>';
+                    '<p class="text-center text-gray-600 py-8">Error loading data: ' + error.message + '</p>';
             }
         }
         
@@ -294,9 +190,9 @@ $current_page = 'home';
             
             if (workouts.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: #6b7280;">
-                        <p style="margin-bottom: 1rem;">No workouts yet</p>
-                        <a href="exercises.php" class="btn">Start Your First Workout</a>
+                    <div class="text-center py-8 text-gray-600">
+                        <p class="mb-4">No workouts yet</p>
+                        <a href="exercises.php" class="dashboard-btn">Start Your First Workout</a>
                     </div>
                 `;
                 return;
@@ -317,19 +213,19 @@ $current_page = 'home';
             };
             
             container.innerHTML = workouts.map(workout => `
-                <div class="workout-item">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div class="workout-icon">${getExerciseEmoji(workout.exercise_name)}</div>
+                <div class="dashboard-workout-item">
+                    <div class="flex items-center gap-4">
+                        <div class="dashboard-workout-icon">${getExerciseEmoji(workout.exercise_name)}</div>
                         <div>
-                            <p style="font-weight: 600; color: #111827;">${workout.exercise_name}</p>
-                            <p style="font-size: 0.875rem; color: #6b7280;">${new Date(workout.workout_date).toLocaleDateString()}</p>
+                            <p class="font-semibold text-gray-900">${workout.exercise_name}</p>
+                            <p class="text-sm text-gray-600">${new Date(workout.workout_date).toLocaleDateString()}</p>
                         </div>
                     </div>
-                    <div style="text-align: right;">
-                        <p style="font-size: 1.5rem; font-weight: 700; color: ${getScoreColor(workout.form_score)};">
+                    <div class="text-right">
+                        <p class="text-2xl font-bold" style="color: ${getScoreColor(workout.form_score)};">
                             ${Math.round(workout.form_score)}%
                         </p>
-                        <p style="font-size: 0.875rem; color: #6b7280;">
+                        <p class="text-sm text-gray-600">
                             ${workout.reps_completed} reps
                         </p>
                     </div>

@@ -15,53 +15,51 @@ $current_page = 'exercises';
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dark_mode.css">
     <style>
-        
+        /* Additional styles for improved visibility */
         #workoutVideo {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
             transform: scaleX(-1); /* Mirror video */
         }
         
         /* IMPROVED: Larger, more visible feedback */
         .feedback-good { 
-            color: #22c55e; 
+            color: #22c55e !important; 
             font-size: 1.5rem !important;
             font-weight: 700 !important;
         }
         .feedback-warning { 
-            color: #f59e0b; 
+            color: #f59e0b !important; 
             font-size: 1.5rem !important;
             font-weight: 700 !important;
         }
         .feedback-error { 
-            color: #ef4444; 
+            color: #ef4444 !important; 
             font-size: 1.5rem !important;
             font-weight: 700 !important;
         }
         
         /* IMPROVED: Position indicator much larger */
         .position-indicator {
-            position: absolute;
-            top: 1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.85);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 1rem;
-            font-weight: bold;
-            font-size: 1.5rem;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            position: absolute !important;
+            top: 1rem !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            background: rgba(0, 0, 0, 0.85) !important;
+            color: white !important;
+            padding: 1rem 2rem !important;
+            border-radius: 1rem !important;
+            font-weight: bold !important;
+            font-size: 1.5rem !important;
+            text-align: center !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+            z-index: 10 !important;
         }
         .position-valid { 
-            background: rgba(34, 197, 94, 0.9); 
-            border: 3px solid #22c55e;
+            background: rgba(34, 197, 94, 0.9) !important; 
+            border: 3px solid #22c55e !important;
         }
         .position-invalid { 
-            background: rgba(239, 68, 68, 0.9); 
-            border: 3px solid #ef4444;
+            background: rgba(239, 68, 68, 0.9) !important; 
+            border: 3px solid #ef4444 !important;
         }
         
         /* IMPROVED: Feedback panel items much larger */
@@ -71,45 +69,61 @@ $current_page = 'exercises';
             line-height: 1.8 !important;
             padding: 0.5rem 0 !important;
         }
+
+        /* Ensure workout page is properly hidden */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Better rep counter visibility */
+        .rep-count {
+            font-size: 3rem !important;
+            font-weight: 800 !important;
+        }
+
+        /* Better form score visibility */
+        .form-score-value {
+            font-size: 2rem !important;
+            font-weight: 700 !important;
+        }
     </style>
 </head>
-<body class="bg-gray-50">
-
-    <!-- Navigation  -->
+<body class="exercises-page">
+    <!-- Navigation -->
     <?php include '../includes/header.php'; ?>
 
     <!-- Exercise Library Page -->
-    <div id="libraryPage" class="min-h-screen bg-gray-50">
-        <div class="max-w-7xl mx-auto p-6">
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Exercise Library</h1>
-                <p class="text-gray-600">Choose an exercise to get started with AI-powered form analysis</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="exerciseGrid"></div>
+    <div id="libraryPage" class="library-page">
+        <div class="main-content">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Exercise Library</h1>
+            <p class="text-gray-600">Choose an exercise to get started with AI-powered form analysis</p>
+            
+            <div class="exercise-grid" id="exerciseGrid"></div>
         </div>
     </div>
 
     <!-- Exercise Detail Page -->
-    <div id="detailPage" class="hidden min-h-screen bg-gray-50">
-        <div class="max-w-4xl mx-auto p-6">
-            <button onclick="showPage('library')" class="mb-6 text-gray-600 hover:text-gray-900 flex items-center space-x-2">
+    <div id="detailPage" class="detail-page hidden">
+        <div class="main-content">
+            <a href="javascript:void(0);" onclick="showPage('library')" class="back-button">
                 <svg class="icon" viewBox="0 0 24 24" style="transform: rotate(180deg);">
                     <path d="m9 18 6-6-6-6"></path>
                 </svg>
                 <span>Back to Library</span>
-            </button>
-            <div class="bg-white rounded-2xl p-8 shadow-sm mb-6" id="exerciseDetail"></div>
+            </a>
+            
+            <div class="exercise-detail-card" id="exerciseDetail"></div>
         </div>
     </div>
 
     <!-- Workout Active Page (ML Integration) -->
-    <div id="workoutPage" class="hidden min-h-screen bg-gray-900">
-        <div class="max-w-7xl mx-auto p-6">
+    <div id="workoutPage" class="workout-page hidden">
+        <div class="workout-container">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Camera Feed -->
                 <div class="lg:col-span-2">
-                    <div class="bg-black rounded-2xl overflow-hidden relative" style="height: 600px;">
-                        <video id="workoutVideo" autoplay playsinline></video>
+                    <div class="camera-container">
+                        <video id="workoutVideo" class="camera-feed" autoplay playsinline></video>
                         
                         <!-- Position Indicator -->
                         <div id="positionIndicator" class="position-indicator position-invalid">
@@ -117,15 +131,15 @@ $current_page = 'exercises';
                         </div>
                         
                         <!-- Rep Counter -->
-                        <div class="absolute top-4 right-4 bg-black bg-opacity-70 text-white px-6 py-4 rounded-lg">
-                            <p class="text-sm text-gray-400">Reps</p>
-                            <p class="text-5xl font-bold" id="repCount">0</p>
+                        <div class="rep-counter">
+                            <p class="rep-counter-label">Reps</p>
+                            <p class="rep-count" id="repCount">0</p>
                         </div>
                         
                         <!-- Form Score -->
-                        <div class="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white px-6 py-4 rounded-lg">
-                            <p class="text-sm text-gray-400">Form Score</p>
-                            <p class="text-3xl font-bold" id="formScore">0%</p>
+                        <div class="form-score">
+                            <p class="form-score-label">Form Score</p>
+                            <p class="form-score-value" id="formScore">0%</p>
                         </div>
                     </div>
                 </div>
@@ -133,39 +147,39 @@ $current_page = 'exercises';
                 <!-- Feedback Panel -->
                 <div class="space-y-4">
                     <!-- Exercise Info -->
-                    <div class="bg-white rounded-2xl p-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-2" id="currentExerciseName">Push-up</h3>
+                    <div class="feedback-panel">
+                        <h3 id="currentExerciseName">Push-up</h3>
                         <p class="text-sm text-gray-600 mb-4">AI is analyzing your form in real-time</p>
                         
                         <!-- ML Backend Status -->
-                        <div class="mb-4 p-3 bg-gray-100 rounded-lg">
-                            <p class="text-xs text-gray-600">ML Backend Status:</p>
-                            <p class="text-sm font-semibold" id="mlStatus">Connecting...</p>
+                        <div class="ml-status">
+                            <p class="ml-status-label">ML Backend Status:</p>
+                            <p class="ml-status-value" id="mlStatus">Connecting...</p>
                         </div>
                     </div>
 
                     <!-- Real-Time Feedback -->
-                    <div class="bg-white rounded-2xl p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">Real-Time Feedback</h3>
+                    <div class="feedback-panel">
+                        <h3>Real-Time Feedback</h3>
                         <div id="feedbackContainer" class="space-y-3">
                             <p class="text-gray-500 text-sm">Start exercising to see feedback...</p>
                         </div>
                     </div>
 
                     <!-- Suggestions -->
-                    <div class="bg-white rounded-2xl p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-4">To Improve</h3>
+                    <div class="feedback-panel">
+                        <h3>To Improve</h3>
                         <div id="suggestionsContainer" class="space-y-2">
                             <p class="text-gray-500 text-sm">Suggestions will appear here...</p>
                         </div>
                     </div>
 
                     <!-- Control Buttons -->
-                    <div class="bg-white rounded-2xl p-6 space-y-3">
-                        <button onclick="stopWorkout()" class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-semibold transition">
+                    <div class="control-buttons">
+                        <button onclick="stopWorkout()" class="control-button stop">
                             Stop & Save Workout
                         </button>
-                        <button onclick="resetReps()" class="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 rounded-xl font-semibold transition">
+                        <button onclick="resetReps()" class="control-button reset">
                             Reset Rep Counter
                         </button>
                     </div>
@@ -175,33 +189,33 @@ $current_page = 'exercises';
     </div>
 
     <!-- Workout Summary Page -->
-    <div id="summaryPage" class="hidden min-h-screen bg-gray-50">
-        <div class="max-w-4xl mx-auto p-6">
-            <div class="bg-white rounded-2xl p-8 shadow-sm text-center">
-                <div class="text-6xl mb-4">🎉</div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Workout Complete!</h1>
-                <p class="text-gray-600 mb-8">Great job on your session</p>
+    <div id="summaryPage" class="summary-page hidden">
+        <div class="summary-container">
+            <div class="summary-card">
+                <div class="summary-emoji">🎉</div>
+                <h1 class="summary-title">Workout Complete!</h1>
+                <p class="summary-subtitle">Great job on your session</p>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-blue-50 rounded-xl p-6">
-                        <p class="text-blue-600 font-semibold mb-2">Reps Completed</p>
-                        <p class="text-4xl font-bold text-blue-700" id="summaryReps">0</p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <p class="stat-label">Reps Completed</p>
+                        <p class="stat-value" id="summaryReps">0</p>
                     </div>
-                    <div class="bg-purple-50 rounded-xl p-6">
-                        <p class="text-purple-600 font-semibold mb-2">Avg Form Score</p>
-                        <p class="text-4xl font-bold text-purple-700" id="summaryFormScore">0%</p>
+                    <div class="stat-card">
+                        <p class="stat-label">Avg Form Score</p>
+                        <p class="stat-value" id="summaryFormScore">0%</p>
                     </div>
-                    <div class="bg-green-50 rounded-xl p-6">
-                        <p class="text-green-600 font-semibold mb-2">Duration</p>
-                        <p class="text-4xl font-bold text-green-700" id="summaryDuration">0:00</p>
+                    <div class="stat-card">
+                        <p class="stat-label">Duration</p>
+                        <p class="stat-value" id="summaryDuration">0:00</p>
                     </div>
                 </div>
 
-                <div class="flex space-x-4">
-                    <a href="progress.php" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition">
+                <div class="action-buttons">
+                    <a href="progress.php" class="action-button secondary">
                         View Progress
                     </a>
-                    <button onclick="showPage('library')" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition">
+                    <button onclick="showPage('library')" class="action-button primary">
                         New Workout
                     </button>
                 </div>
@@ -209,10 +223,10 @@ $current_page = 'exercises';
         </div>
     </div>
 
-    <!-- FOOTER -->
+    <!-- Footer -->
     <?php include '../includes/footer.php'; ?>
 
-    <!-- SCRIPTS -->
+    <!-- Scripts -->
     <script>
         // Check authentication
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -286,13 +300,13 @@ $current_page = 'exercises';
         function renderExercises() {
             const grid = document.getElementById('exerciseGrid');
             grid.innerHTML = exercises.map(ex => `
-                <div class="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition cursor-pointer" onclick="showExerciseDetail('${ex.id}')">
-                    <div class="text-6xl mb-4 text-center">${ex.icon}</div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">${ex.name}</h3>
-                    <p class="text-sm text-gray-600 mb-4">${ex.description}</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full difficulty-badge">${ex.difficulty}</span>
-                        ${ex.hasML ? '<span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">🤖 AI Ready</span>' : ''}
+                <div class="exercise-card" onclick="showExerciseDetail('${ex.id}')">
+                    <div class="exercise-icon">${ex.icon}</div>
+                    <h3 class="exercise-name">${ex.name}</h3>
+                    <p class="exercise-description">${ex.description}</p>
+                    <div class="exercise-meta">
+                        <span class="difficulty-badge">${ex.difficulty}</span>
+                        ${ex.hasML ? '<span class="ai-badge">🤖 AI Ready</span>' : ''}
                     </div>
                 </div>
             `).join('');
@@ -304,26 +318,28 @@ $current_page = 'exercises';
             if (!exercise) return;
 
             document.getElementById('exerciseDetail').innerHTML = `
-                <div class="text-6xl mb-4 text-center">${exercise.icon}</div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-4 text-center">${exercise.name}</h1>
-                <p class="text-gray-600 text-center mb-6">${exercise.description}</p>
+                <div class="detail-icon">${exercise.icon}</div>
+                <h1 class="detail-name">${exercise.name}</h1>
+                <p class="detail-description">${exercise.description}</p>
                 
-                ${exercise.hasML ? '<div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-center"><p class="text-green-800 font-semibold">✨ AI-Powered Form Analysis Available</p></div>' : ''}
+                ${exercise.hasML ? 
+                    '<div class="ai-available-badge">✨ AI-Powered Form Analysis Available</div>' : 
+                    ''
+                }
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div>
-                        <h3 class="font-bold text-gray-900 mb-3">Target Muscles</h3>
-                        <div class="flex flex-wrap gap-2">
-                            ${exercise.muscles.map(m => `<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">${m}</span>`).join('')}
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 mb-3">Difficulty</h3>
-                        <span class="bg-blue-100 text-blue-700 px-4 py-2 rounded-full">${exercise.difficulty}</span>
+                <div class="mb-8">
+                    <h3 class="font-bold text-gray-900 mb-3">Target Muscles</h3>
+                    <div class="muscle-tags">
+                        ${exercise.muscles.map(m => `<span class="muscle-tag">${m}</span>`).join('')}
                     </div>
                 </div>
 
-                <button onclick="startExercise('${exercise.id}')" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition">
+                <div class="mb-8">
+                    <h3 class="font-bold text-gray-900 mb-3">Difficulty</h3>
+                    <span class="difficulty-badge" style="font-size: 1rem;">${exercise.difficulty}</span>
+                </div>
+
+                <button onclick="startExercise('${exercise.id}')" class="start-button">
                     ${exercise.hasML ? '🤖 Start with AI Analysis' : 'Start Exercise'}
                 </button>
             `;
@@ -366,12 +382,15 @@ $current_page = 'exercises';
                 
                 if (data.status === 'ok') {
                     statusEl.innerHTML = '<span class="text-green-600">✓ Connected & Ready</span>';
+                    statusEl.className = 'ml-status-value';
                 } else {
                     statusEl.innerHTML = '<span class="text-red-600">✗ Backend Error</span>';
+                    statusEl.className = 'ml-status-value error';
                 }
             } catch (error) {
                 console.error('ML Backend not responding:', error);
                 statusEl.innerHTML = '<span class="text-red-600">✗ Not Connected</span><br><span class="text-xs">Start Python backend: python app.py</span>';
+                statusEl.className = 'ml-status-value error';
             }
         }
 
@@ -477,7 +496,7 @@ $current_page = 'exercises';
                 feedbackContainer.innerHTML = result.issues.slice(0, 4).map(issue => {
                     const className = issue.includes('✓') ? 'feedback-good' : 
                                     issue.includes('⚠') ? 'feedback-warning' : 'feedback-error';
-                    return `<p class="${className} text-sm font-semibold">${issue}</p>`;
+                    return `<p class="${className}">${issue}</p>`;
                 }).join('');
             }
 
@@ -485,7 +504,7 @@ $current_page = 'exercises';
             const suggestionsContainer = document.getElementById('suggestionsContainer');
             if (result.suggestions && result.suggestions.length > 0) {
                 suggestionsContainer.innerHTML = result.suggestions.slice(0, 3).map(suggestion => 
-                    `<p class="text-sm text-gray-700">→ ${suggestion}</p>`
+                    `<p class="suggestion-item">${suggestion}</p>`
                 ).join('');
             }
         }
@@ -586,7 +605,7 @@ $current_page = 'exercises';
         showPage('library');
     </script>
 
-    <!-- theme toggle script -->
+    <!-- Theme toggle script -->
     <script src="../assets/js/theme-toggle.js"></script>
 </body>
 </html>
